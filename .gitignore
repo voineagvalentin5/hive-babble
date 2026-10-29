@@ -3,3 +3,6 @@ obj/
 Builds/
 .vs/
 *.user
+
+translator/
+*.log
