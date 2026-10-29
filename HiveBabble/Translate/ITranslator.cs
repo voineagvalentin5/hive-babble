@@ -7,5 +7,7 @@ public interface ITranslator
     /// <param name="sourceLang">null or "auto" = detect.</param>
     Task<string> TranslateAsync(string text, string? sourceLang, string targetLang);
 }
+/// <summary>Providers that report the language they detected when the source is auto.</summary>
+public interface IDetectsLanguage { string? LastDetectedLanguage { get; } }
 /// <summary>A user-facing problem (no backend, no key, bad key). Shown as a message, never a crash.</summary>
 public sealed class TranslatorException(string message, Exception? inner = null) : Exception(message, inner);

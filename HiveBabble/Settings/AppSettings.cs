@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 namespace HiveBabble.Settings;
 public enum TranslatorProvider { Libre, DeepL, Google }
+/// <summary>M4: where translations appear.</summary>
+public enum DisplayMode { Overlay, Side, Both }
 /// <summary>Saved to %APPDATA%\HiveBabble\settings.json. The API key is DPAPI-encrypted (current user) and never stored in plain text.</summary>
 public sealed class AppSettings
 {
@@ -16,6 +18,12 @@ public sealed class AppSettings
     public string TargetLanguage { get; set; } = "en";
     public string OcrLanguage { get; set; } = "";
     public int LoopIntervalMs { get; set; } = 750;
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public DisplayMode Mode { get; set; } = DisplayMode.Overlay;
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
     public string? ProtectedApiKey { get; set; }
 
     static string PathFile => System.IO.Path.Combine(Log.Dir, "settings.json");

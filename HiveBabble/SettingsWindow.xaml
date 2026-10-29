@@ -14,6 +14,11 @@
     <TextBox x:Name="SourceBox"/>
     <TextBlock Margin="0,10,0,2" Text="Target language (en, es...)"/>
     <TextBox x:Name="TargetBox"/>
+    <TextBlock Margin="0,10,0,2" Text="OCR language (blank = Windows profile languages)"/>
+    <ComboBox x:Name="OcrBox" IsEditable="True"/>
+    <TextBlock x:Name="OcrState" Margin="0,2,0,0" FontSize="11" Foreground="#99E0A526" TextWrapping="Wrap"/>
+    <TextBlock Margin="0,10,0,2" Text="Live refresh interval (ms)"/>
+    <TextBox x:Name="LoopBox"/>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
       <Button Content="Save" Style="{StaticResource BarButton}" IsDefault="True" Click="Save_Click"/>
       <Button Content="Cancel" Style="{StaticResource BarButton}" IsCancel="True"/>

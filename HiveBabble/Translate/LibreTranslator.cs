@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 namespace HiveBabble.Translate;
 /// <summary>LibreTranslate HTTP API (default: local offline Argos server at http://127.0.0.1:5000, no key).</summary>
-public sealed class LibreTranslator : ITranslator
+public sealed class LibreTranslator : ITranslator, IDetectsLanguage
 {
     readonly string _baseUrl;
     readonly string? _apiKey;
@@ -12,6 +12,7 @@ public sealed class LibreTranslator : ITranslator
     public LibreTranslator(string baseUrl, string? apiKey = null) : this(baseUrl, apiKey, TranslatorHttp.Shared) { }
     internal LibreTranslator(string baseUrl, string? apiKey, HttpClient client) { _baseUrl = baseUrl; _apiKey = apiKey; _http = client; }
     public string Name => "Libre (local)";
+    public string? LastDetectedLanguage { get; private set; }
     public async Task<string> TranslateAsync(string text, string? sourceLang, string targetLang)
     {
         if (string.IsNullOrWhiteSpace(text)) return "";
@@ -24,7 +25,12 @@ public sealed class LibreTranslator : ITranslator
             Content = JsonContent.Create(new { q = text, source = TranslatorHttp.Source(sourceLang) ?? "auto",
                 target = TranslatorHttp.Target(targetLang), format = "text", api_key = _apiKey ?? "" })
         };
-        return await TranslatorHttp.SendAsync(_http, request, "LibreTranslate", json => json.GetProperty("translatedText").GetString(),
+        return await TranslatorHttp.SendAsync(_http, request, "LibreTranslate", json =>
+            {
+                if (json.TryGetProperty("detectedLanguage", out var d) && d.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    d.TryGetProperty("language", out var dl)) LastDetectedLanguage = dl.GetString();
+                return json.GetProperty("translatedText").GetString();
+            },
             status => status == 400 ? "LibreTranslate rejected the request. Check the selected languages and installed translation models." : TranslatorHttp.StatusMessage("LibreTranslate", status),
             endpoint.IsLoopback ? "Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again."
                 : "Could not reach LibreTranslate. Check the server URL and connection in Settings.");

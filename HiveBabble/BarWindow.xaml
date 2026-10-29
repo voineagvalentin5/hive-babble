@@ -7,8 +7,8 @@
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
         <Button x:Name="LockButton" Style="{StaticResource BarButton}" Content="Lock" ToolTip="Click through the frame · Ctrl+Alt+L" Click="Lock_Click"/>
         <Button x:Name="PauseButton" Style="{StaticResource BarButton}" Content="Pause" Click="Pause_Click"/>
-        <Button Style="{StaticResource BarButton}" Content="Lang ▾" ToolTip="Target language" Click="Placeholder_Click"/>
-        <Button Style="{StaticResource BarButton}" Content="Mode ▾" ToolTip="Translation display" Click="Placeholder_Click"/>
+        <Button x:Name="LangButton" Style="{StaticResource BarButton}" Content="EN &#x25BE;" ToolTip="Target language" Click="Lang_Click"/>
+        <Button x:Name="ModeButton" Style="{StaticResource BarButton}" Content="Overlay &#x25BE;" ToolTip="Overlay, side panel, or both" Click="Mode_Click"/>
         <Button Style="{StaticResource BarButton}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings" AutomationProperties.Name="Settings" Click="Settings_Click"/>
         <Button Style="{StaticResource BarButton}" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" Background="Transparent" ToolTip="Close" AutomationProperties.Name="Close" Click="Close_Click"/>
       </StackPanel>

@@ -9,6 +9,8 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
+        DispatcherUnhandledException += (_, ex) => { Log.Write("Unhandled UI error: " + ex.Exception); ex.Handled = true; };
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Write("Fatal: " + ex.ExceptionObject);
         int fixtureIndex = Array.IndexOf(e.Args, "--diagnostic-backdrop");
         if (Array.IndexOf(e.Args, "--sample-scene") >= 0)
         {

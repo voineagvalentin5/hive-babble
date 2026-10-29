@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Threading;
 using HiveBabble.Capture;
 using HiveBabble.Ocr;
 using HiveBabble.Settings;
@@ -11,39 +15,78 @@ using HiveBabble.Translate;
 
 namespace HiveBabble;
 
+/// <summary>Live loop counters, read by the --verify-live self-test.</summary>
+public sealed class LoopStats
+{
+    public int Captures, Skipped, Processed, Errors, CacheHits, CacheLookups;
+    public long LastLatencyMs, LastOcrMs;
+    public string LastHash = "";
+}
+
 /// <summary>The see-through frame (interior). The drag bar lives in an owned BarWindow glued above it,
 /// so locking makes only this window click-through while the bar stays clickable.</summary>
 public partial class FrameWindow : Window
 {
     const int WM_HOTKEY = 0x0312, HOTKEY_LOCK = 0xB0B1, HOTKEY_SNAP = 0xB0B2;
     const uint MOD_CONTROL = 0x2, MOD_ALT = 0x1, MOD_NOREPEAT = 0x4000, VK_L = 0x4C, VK_T = 0x54;
+    public const int CaptureInset = 4; // skip the gold border
+
+    public static readonly (string Code, string Label)[] TargetLanguages =
+    {
+        ("en", "English"), ("es", "Spanish"), ("ja", "Japanese"), ("fr", "French"), ("de", "German"),
+        ("it", "Italian"), ("pt", "Portuguese"), ("zh", "Chinese"), ("ko", "Korean"), ("ru", "Russian"),
+    };
 
     IntPtr _hwnd;
-    bool _locked, _paused, _syncing, _busy;
+    bool _locked, _paused, _syncing, _busy, _diagnostic;
     BarWindow? _bar;
     SidePanelWindow? _panel;
+    TrayIcon? _tray;
     readonly ScreenCapturer _capturer = new();
+    readonly OverlayRenderer _overlay = new();
+    readonly DispatcherTimer _loop = new(DispatcherPriority.Background);
+    WindowsOcrEngine? _ocr;
+    string _lastHash = "";
+    DateTime _retryAt = DateTime.MaxValue;
     public bool ExcludedFromCapture { get; private set; }
     public AppSettings Settings { get; } = AppSettings.Load();
+    public TranslationCache Cache { get; } = new();
+    public LoopStats Stats { get; } = new();
     public string LastSourceText { get; private set; } = "";
     public string LastTranslatedText { get; private set; } = "";
     public string LastStatus { get; private set; } = "";
+    public string? LastDetectedLanguage { get; private set; }
+    public IReadOnlyList<OcrLine> LastLines { get; private set; } = Array.Empty<OcrLine>();
     public SidePanelWindow? ResultsPanel => _panel;
+    public BarWindow? Bar => _bar;
+    public TrayIcon? Tray => _tray;
+    public System.Windows.Controls.Canvas Overlay => OverlayCanvas;
+    public bool LoopRunning => _loop.IsEnabled;
+    /// <summary>Diagnostics only: sees every captured frame that changed.</summary>
+    public Action<CapturedImage>? CaptureTap { get; set; }
 
     public FrameWindow()
     {
         InitializeComponent();
-        ApplyCommandLineRect();
+        _diagnostic = Environment.GetCommandLineArgs().Any(a => a.StartsWith("--verify-", StringComparison.Ordinal));
+        if (!ApplyCommandLineRect() && !_diagnostic) RestorePlacement();
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
-        LocationChanged += (_, _) => PlaceChildren();
-        SizeChanged += (_, _) => PlaceChildren();
+        LocationChanged += (_, _) => { PlaceChildren(); _overlay.Clear(OverlayCanvas); };
+        SizeChanged += (_, _) => { PlaceChildren(); _overlay.Clear(OverlayCanvas); };
+        DpiChanged += (_, _) => { ResetFrameHash(); PlaceChildren(); };
         StateChanged += (_, _) =>
         {
             var v = WindowState == WindowState.Minimized ? Visibility.Hidden : Visibility.Visible;
             if (_bar != null) _bar.Visibility = v;
         };
-        Closed += (_, _) => { if (_hwnd != IntPtr.Zero) { Native.UnregisterHotKey(_hwnd, HOTKEY_LOCK); Native.UnregisterHotKey(_hwnd, HOTKEY_SNAP); } };
+        _loop.Tick += LoopTick;
+        Closing += (_, _) => SavePlacement();
+        Closed += (_, _) =>
+        {
+            _loop.Stop(); _tray?.Dispose();
+            if (_hwnd != IntPtr.Zero) { Native.UnregisterHotKey(_hwnd, HOTKEY_LOCK); Native.UnregisterHotKey(_hwnd, HOTKEY_SNAP); }
+        };
     }
 
     // --rect L,T,W,H (DIPs) positions the frame; --autosnap N snaps after N seconds; --exit closes after the snap. Used for testing.
@@ -54,17 +97,43 @@ public partial class FrameWindow : Window
         return i >= 0 && i + 1 < a.Length ? a[i + 1] : (i >= 0 ? "" : null);
     }
 
-    void ApplyCommandLineRect()
+    bool ApplyCommandLineRect()
     {
-        var r = Arg("--rect")?.Split(',').Select(double.Parse).ToArray();
-        if (r is { Length: 4 }) { WindowStartupLocation = WindowStartupLocation.Manual; Left = r[0]; Top = r[1]; Width = r[2]; Height = r[3]; }
+        var r = Arg("--rect")?.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        if (r is not { Length: 4 }) return false;
+        WindowStartupLocation = WindowStartupLocation.Manual; Left = r[0]; Top = r[1]; Width = r[2]; Height = r[3];
+        return true;
+    }
+
+    /// <summary>M4: restore the saved frame rect if it is still on a connected monitor (mixed-DPI safe: checked in DIPs against the virtual screen).</summary>
+    void RestorePlacement()
+    {
+        var s = Settings;
+        if (s.WindowLeft is not double l || s.WindowTop is not double t || s.WindowWidth is not double w || s.WindowHeight is not double h) return;
+        if (w < MinWidth || h < MinHeight) return;
+        var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+        var bar = new Rect(l, t - 60, w, 60);
+        if (!screen.IntersectsWith(bar)) { Log.Write("Saved window position is off-screen; using the default."); return; }
+        bool onMonitor = System.Windows.Forms.Screen.AllScreens.Any(sc => sc.WorkingArea.IntersectsWith(
+            new System.Drawing.Rectangle((int)l, (int)t, (int)w, (int)h)) || sc.Bounds.Contains((int)(l + 20), (int)t));
+        WindowStartupLocation = WindowStartupLocation.Manual; Left = l; Top = t; Width = w; Height = h;
+        Log.Write($"Restored window {l:0},{t:0} {w:0}x{h:0} (monitor match: {onMonitor}).");
+    }
+
+    void SavePlacement()
+    {
+        if (_diagnostic || WindowState != WindowState.Normal) return;
+        Settings.WindowLeft = Left; Settings.WindowTop = Top; Settings.WindowWidth = ActualWidth; Settings.WindowHeight = ActualHeight;
+        try { Settings.Save(); Log.Write($"Saved window {Left:0},{Top:0} {ActualWidth:0}x{ActualHeight:0}."); }
+        catch (Exception ex) { Log.Write("Could not save window position: " + ex.GetType().Name); }
     }
 
     async void OnLoaded(object sender, RoutedEventArgs e)
     {
         _bar = new BarWindow(this); _panel = new SidePanelWindow(this);
-        PlaceChildren(); _bar.Show(); UpdateStatus();
-        Log.Write($"Started. Provider={Settings.Provider} OCR languages available: {SafeOcrLanguages()}");
+        PlaceChildren(); _bar.Show(); UpdateStatus(); _bar.SetLanguageVisual(Settings.TargetLanguage); _bar.SetModeVisual(Settings.Mode);
+        try { _tray = new TrayIcon(this); } catch (Exception ex) { Log.Write("Tray icon unavailable: " + ex.GetType().Name); }
+        Log.Write($"Started. Provider={Settings.Provider} Mode={Settings.Mode} Target={Settings.TargetLanguage} Loop={Settings.LoopIntervalMs} ms OCR languages available: {SafeOcrLanguages()}");
         if (Arg("--verify-providers") is string providerDirectory)
         {
             await Diagnostics.ProviderVerification.RunAsync(providerDirectory);
@@ -85,6 +154,15 @@ public partial class FrameWindow : Window
             Close();
             return;
         }
+        if (Arg("--verify-live") is string liveDirectory)
+        {
+            try { await Diagnostics.LiveVerification.RunAsync(this, liveDirectory); }
+            catch (Exception ex) { Log.Write("Live verification failed: " + ex); }
+            Close();
+            return;
+        }
+        _ = WarmUpTranslator();
+        StartLoop();
         if (Arg("--autosnap") is string s)
         {
             await Task.Delay(TimeSpan.FromSeconds(double.TryParse(s, out var sec) ? sec : 3));
@@ -114,34 +192,145 @@ public partial class FrameWindow : Window
         return IntPtr.Zero;
     }
 
-    /// <summary>M2: capture the frame rect, OCR it, translate, show in the side panel. Never throws.</summary>
+    /// <summary>The local Argos models load lazily on the first request (~3 s). Pay that cost at startup, not on the first frame.</summary>
+    public Task WarmUpTranslator()
+    {
+        if (Settings.Provider != TranslatorProvider.Libre) return Task.CompletedTask;
+        var tr = TranslatorFactory.Create(Settings);
+        string src = Settings.SourceLanguage, tgt = Settings.TargetLanguage;
+        return Task.Run(async () =>
+        {
+            var sw = Stopwatch.StartNew();
+            try { await tr.TranslateAsync("Hola, buenos d\u00edas.", src, tgt); Log.Write($"Translator warm-up {sw.ElapsedMilliseconds} ms."); }
+            catch (TranslatorException ex) { Log.Write("Translator warm-up: " + ex.Message); }
+            catch (Exception ex) { Log.Write("Translator warm-up failed: " + ex.GetType().Name); }
+        });
+    }
+
+    /// <summary>Diagnostics: SHA-256 of what the capture sees right now inside the frame.</summary>
+    public string CaptureHashNow()
+    {
+        Native.GetWindowRect(_hwnd, out var r);
+        var img = _capturer.CaptureRect(r.Left + CaptureInset, r.Top + CaptureInset, r.Right - r.Left - 2 * CaptureInset, r.Bottom - r.Top - 2 * CaptureInset);
+        return Convert.ToHexString(SHA256.HashData(img.Bgra));
+    }
+
+    // ---- M3 live loop ----
+    public void StartLoop()
+    {
+        _loop.Interval = TimeSpan.FromMilliseconds(Math.Clamp(Settings.LoopIntervalMs, 100, 10000));
+        _loop.Start();
+        LoopTick(null, EventArgs.Empty);
+    }
+    public void StopLoop() => _loop.Stop();
+    /// <summary>Forces the next tick to re-OCR even if the pixels did not change (settings, language or mode change).</summary>
+    public void ResetFrameHash() { _lastHash = ""; _retryAt = DateTime.MaxValue; }
+
+    async void LoopTick(object? sender, EventArgs e)
+    {
+        if (_busy || _paused || !IsVisible || WindowState == WindowState.Minimized) return;
+        await ProcessFrameAsync(force: false);
+    }
+
+    /// <summary>Hotkey / manual snap: always re-reads the frame.</summary>
     public async Task SnapAsync()
     {
-        if (_busy || _paused) { if (_paused) ShowStatus("Paused · press Resume to snap"); return; }
+        if (_paused) { ShowStatus("Paused \u00b7 press Resume to translate"); return; }
+        if (_busy) return;
+        await ProcessFrameAsync(force: true);
+    }
+
+    /// <summary>Capture, hash, OCR, translate (cached per line), render. Returns true if the frame was processed. Never throws.</summary>
+    public async Task<bool> ProcessFrameAsync(bool force)
+    {
+        if (_busy || _hwnd == IntPtr.Zero) return false;
         _busy = true;
-        LastSourceText = "";
-        LastTranslatedText = "";
         var sw = Stopwatch.StartNew();
         try
         {
-            ShowStatus("Snapping…");
             Native.GetWindowRect(_hwnd, out var r);
-            const int inset = 4; // skip the gold border
-            var img = _capturer.CaptureRect(r.Left + inset, r.Top + inset, r.Right - r.Left - 2 * inset, r.Bottom - r.Top - 2 * inset);
-            var ocr = new WindowsOcrEngine(string.IsNullOrWhiteSpace(Settings.OcrLanguage) ? null : Settings.OcrLanguage);
-            var lines = await ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
-            var source = string.Join("\n", lines.Select(l => l.Text));
-            LastSourceText = source;
-            Log.Write($"Snap {img.Width}x{img.Height}px OCR[{ocr.LanguageTag}] {lines.Count} lines.");
-            if (lines.Count == 0) { ShowPanel("", "No text found inside the frame."); return; }
+            var img = _capturer.CaptureRect(r.Left + CaptureInset, r.Top + CaptureInset, r.Right - r.Left - 2 * CaptureInset, r.Bottom - r.Top - 2 * CaptureInset);
+            string hash = Convert.ToHexString(SHA256.HashData(img.Bgra));
+            Stats.Captures++; Stats.LastHash = hash;
+            if (!force && hash == _lastHash && DateTime.Now < _retryAt) { Stats.Skipped++; return false; }
+            _lastHash = hash; _retryAt = DateTime.MaxValue;
+            CaptureTap?.Invoke(img);
+
+            _ocr ??= new WindowsOcrEngine(string.IsNullOrWhiteSpace(Settings.OcrLanguage) ? null : Settings.OcrLanguage);
+            var lines = await _ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
+            Stats.LastOcrMs = sw.ElapsedMilliseconds;
+            LastLines = lines;
+            LastSourceText = string.Join("\n", lines.Select(l => l.Text));
+            if (lines.Count == 0)
+            {
+                _overlay.Clear(OverlayCanvas);
+                LastTranslatedText = ""; LastStatus = "No text found inside the frame.";
+                if (Settings.Mode != DisplayMode.Overlay) ShowPanel("", LastStatus); else ShowStatus(LastStatus);
+                Stats.Processed++;
+                return true;
+            }
             var tr = TranslatorFactory.Create(Settings);
-            var translated = await tr.TranslateAsync(source, Settings.SourceLanguage, Settings.TargetLanguage);
-            Log.Write($"Translated via {tr.Name} -> {Settings.TargetLanguage} in {sw.ElapsedMilliseconds} ms.");
-            ShowPanel(translated, $"{tr.Name} · {lines.Count} lines · {sw.ElapsedMilliseconds} ms");
+            var (translated, hits) = await TranslateLinesAsync(tr, lines);
+            LastDetectedLanguage = (tr as IDetectsLanguage)?.LastDetectedLanguage ?? (hits == lines.Count ? LastDetectedLanguage : null);
+            long ms = sw.ElapsedMilliseconds;
+            Stats.Processed++; Stats.CacheHits += hits; Stats.CacheLookups += lines.Count; Stats.LastLatencyMs = ms;
+            string detected = LastDetectedLanguage != null ? $" detected={LastDetectedLanguage}" : "";
+            Log.Write($"Frame {img.Width}x{img.Height}px OCR[{_ocr.LanguageTag}] {lines.Count} lines {Stats.LastOcrMs} ms; {tr.Name} {Settings.SourceLanguage}->{Settings.TargetLanguage}{detected}; cache {hits}/{lines.Count}; total {ms} ms.");
+            string status = $"{tr.Name} \u00b7 {lines.Count} lines \u00b7 {hits} cached \u00b7 {ms} ms";
+            LastTranslatedText = string.Join("\n", translated);
+            LastStatus = status;
+            if (Settings.Mode != DisplayMode.Side)
+            {
+                var dpi = VisualTreeHelper.GetDpi(this);
+                _overlay.Render(OverlayCanvas, lines, translated, CaptureInset, dpi.DpiScaleX, dpi.DpiScaleY);
+            }
+            else _overlay.Clear(OverlayCanvas);
+            if (Settings.Mode != DisplayMode.Overlay) ShowPanel(LastTranslatedText, status);
+            else { _panel?.Hide(); ShowStatus(status); }
+            return true;
         }
-        catch (TranslatorException ex) { Log.Write("Translator: " + ex.Message); ShowPanel("", ex.Message); }
-        catch (Exception ex) { Log.Write("Snap failed: " + ex.GetType().Name); ShowPanel("", "Capture or recognition failed. Try a smaller area or check the OCR language in Settings."); }
-        finally { _busy = false; UpdateStatus(); }
+        catch (TranslatorException ex) { Fail("Translator: " + ex.Message, ex.Message); return true; }
+        catch (Exception ex) { Fail("Frame failed: " + ex.GetType().Name + " " + ex.Message, "Capture or recognition failed. Try a smaller area or check the OCR language in Settings."); return true; }
+        finally { _busy = false; }
+    }
+
+    void Fail(string log, string message)
+    {
+        Stats.Errors++;
+        _retryAt = DateTime.Now.AddSeconds(5); // a static frame retries every 5 s instead of every tick
+        Log.Write(log);
+        _overlay.Clear(OverlayCanvas);
+        LastTranslatedText = "";
+        ShowPanel("", message); // errors always show in the panel so they are readable in every mode
+        ShowStatus(message);
+    }
+
+    /// <summary>M4: per-line cache. Only uncached lines are sent, joined in one request (one line per row).</summary>
+    async Task<(string[] Lines, int Hits)> TranslateLinesAsync(ITranslator tr, IReadOnlyList<OcrLine> lines)
+    {
+        string src = Settings.SourceLanguage, tgt = Settings.TargetLanguage, provider = tr.Name;
+        var result = new string[lines.Count];
+        var miss = new List<int>();
+        for (int i = 0; i < lines.Count; i++)
+            if (Cache.TryGet(provider, src, tgt, lines[i].Text, out var hit)) result[i] = hit!; else miss.Add(i);
+        int hits = lines.Count - miss.Count;
+        if (hits > 0) Log.Write($"Cache hit: {hits}/{lines.Count} lines ({provider} {src}->{tgt}).");
+        if (miss.Count > 0)
+        {
+            string joined = string.Join("\n", miss.Select(i => lines[i].Text));
+            var parts = (await tr.TranslateAsync(joined, src, tgt)).Replace("\r\n", "\n").Split('\n');
+            if (parts.Length != miss.Count)
+            {
+                parts = new string[miss.Count];
+                for (int j = 0; j < miss.Count; j++) parts[j] = await tr.TranslateAsync(lines[miss[j]].Text, src, tgt);
+            }
+            for (int j = 0; j < miss.Count; j++)
+            {
+                result[miss[j]] = parts[j].Trim();
+                Cache.Set(provider, src, tgt, lines[miss[j]].Text, result[miss[j]]);
+            }
+        }
+        return (result, hits);
     }
 
     void ShowPanel(string text, string status)
@@ -154,7 +343,45 @@ public partial class FrameWindow : Window
         PlaceChildren();
     }
 
-    public void OpenSettings(Window owner) => new SettingsWindow(Settings) { Owner = owner }.ShowDialog();
+    // ---- M4 controls ----
+    public void SetTargetLanguage(string code)
+    {
+        Settings.TargetLanguage = code; SaveSettingsQuietly();
+        _bar?.SetLanguageVisual(code); ResetFrameHash();
+        ShowStatus("Target: " + code);
+        if (!_loop.IsEnabled && !_diagnostic) _ = SnapAsync();
+    }
+
+    public void SetMode(DisplayMode mode)
+    {
+        Settings.Mode = mode; SaveSettingsQuietly();
+        _bar?.SetModeVisual(mode); ResetFrameHash();
+        if (mode == DisplayMode.Side) _overlay.Clear(OverlayCanvas);
+        if (mode == DisplayMode.Overlay) _panel?.Hide();
+        ShowStatus("Mode: " + mode);
+    }
+
+    void SaveSettingsQuietly() { if (_diagnostic) return; try { Settings.Save(); } catch (Exception ex) { Log.Write("Settings save failed: " + ex.GetType().Name); } }
+
+    public void OpenSettings(Window owner)
+    {
+        if (new SettingsWindow(Settings) { Owner = owner }.ShowDialog() != true) return;
+        _ocr = null; ResetFrameHash();
+        _bar?.SetLanguageVisual(Settings.TargetLanguage);
+        if (_loop.IsEnabled) _loop.Interval = TimeSpan.FromMilliseconds(Math.Clamp(Settings.LoopIntervalMs, 100, 10000));
+    }
+
+    public void ToggleVisible()
+    {
+        if (IsVisible)
+        {
+            _loop.Stop(); _bar?.Hide(); _panel?.Hide(); Hide();
+        }
+        else
+        {
+            Show(); _bar?.Show(); PlaceChildren(); ResetFrameHash(); StartLoop();
+        }
+    }
 
     void PlaceChildren()
     {
@@ -191,10 +418,10 @@ public partial class FrameWindow : Window
         UpdateStatus();
     }
 
-    public void TogglePause() { _paused = !_paused; _bar?.SetPausedVisual(_paused); UpdateStatus(); }
+    public void TogglePause() { _paused = !_paused; _bar?.SetPausedVisual(_paused); if (!_paused) ResetFrameHash(); UpdateStatus(); }
     public void ShowStatus(string s) => StatusText.Text = s;
 
     void UpdateStatus() => StatusText.Text =
-        (_locked ? "Locked (click-through)" : "Unlocked") + (_paused ? " · Paused" : " · Ctrl+Alt+T to translate") +
-        (ExcludedFromCapture && (_bar?.ExcludedFromCapture ?? true) ? "" : " · capture-exclusion unavailable");
+        (_locked ? "Locked (click-through)" : "Unlocked") + (_paused ? " \u00b7 Paused" : " \u00b7 Live") +
+        (ExcludedFromCapture && (_bar?.ExcludedFromCapture ?? true) ? "" : " \u00b7 capture-exclusion unavailable");
 }
