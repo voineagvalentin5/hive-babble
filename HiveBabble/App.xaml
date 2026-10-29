@@ -1,0 +1,30 @@
+<Application x:Class="HiveBabble.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" StartupUri="FrameWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="HiveGold" Color="#E0A526"/>
+    <SolidColorBrush x:Key="HiveCharcoal" Color="#1E1E1E"/>
+    <Style x:Key="BarButton" TargetType="Button">
+      <Setter Property="Foreground" Value="#E0A526"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="#E0A526"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Margin" Value="3,0"/>
+      <Setter Property="Padding" Value="8,1"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="#33E0A526"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Application.Resources>
+</Application>
