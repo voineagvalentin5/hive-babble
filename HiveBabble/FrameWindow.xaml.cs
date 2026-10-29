@@ -16,7 +16,7 @@ namespace HiveBabble;
 public partial class FrameWindow : Window
 {
     const int WM_HOTKEY = 0x0312, HOTKEY_LOCK = 0xB0B1, HOTKEY_SNAP = 0xB0B2;
-    const uint MOD_CONTROL = 0x2, MOD_ALT = 0x1, VK_L = 0x4C, VK_T = 0x54;
+    const uint MOD_CONTROL = 0x2, MOD_ALT = 0x1, MOD_NOREPEAT = 0x4000, VK_L = 0x4C, VK_T = 0x54;
 
     IntPtr _hwnd;
     bool _locked, _paused, _syncing, _busy;
@@ -61,6 +61,13 @@ public partial class FrameWindow : Window
         _bar = new BarWindow(this); _panel = new SidePanelWindow(this);
         PlaceChildren(); _bar.Show(); UpdateStatus();
         Log.Write($"Started. Provider={Settings.Provider} OCR languages available: {SafeOcrLanguages()}");
+        if (Arg("--verify-frame") is string directory)
+        {
+            try { await Diagnostics.FrameVerification.RunAsync(this, directory); }
+            catch (Exception ex) { Log.Write("Frame verification failed: " + ex); }
+            Close();
+            return;
+        }
         if (Arg("--autosnap") is string s)
         {
             await Task.Delay(TimeSpan.FromSeconds(double.TryParse(s, out var sec) ? sec : 3));
@@ -75,10 +82,9 @@ public partial class FrameWindow : Window
     {
         _hwnd = new WindowInteropHelper(this).Handle;
         ExcludedFromCapture = Native.SetWindowDisplayAffinity(_hwnd, Native.WDA_EXCLUDEFROMCAPTURE);
-        if (!Native.RegisterHotKey(_hwnd, HOTKEY_LOCK, MOD_CONTROL | MOD_ALT, VK_L)) Log.Write("Ctrl+Alt+L is taken by another app.");
-        if (!Native.RegisterHotKey(_hwnd, HOTKEY_SNAP, MOD_CONTROL | MOD_ALT, VK_T)) Log.Write("Ctrl+Alt+T is taken by another app.");
+        if (!Native.RegisterHotKey(_hwnd, HOTKEY_LOCK, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_L)) Log.Write("Ctrl+Alt+L is taken by another app.");
+        if (!Native.RegisterHotKey(_hwnd, HOTKEY_SNAP, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_T)) Log.Write("Ctrl+Alt+T is taken by another app.");
         HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
-        if (Top < 34) Top = 34;
     }
 
     IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

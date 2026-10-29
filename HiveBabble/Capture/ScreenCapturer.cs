@@ -21,18 +21,31 @@ public sealed class ScreenCapturer
     public CapturedImage CaptureRect(int x, int y, int width, int height)
     {
         if (width <= 0 || height <= 0) throw new ArgumentException("Empty capture rect.");
-        IntPtr screen = GetDC(IntPtr.Zero), mem = CreateCompatibleDC(screen), bmp = CreateCompatibleBitmap(screen, width, height);
-        IntPtr old = SelectObject(mem, bmp);
+        if (width > 16384 || height > 16384) throw new ArgumentException("Capture area is too large.");
+        IntPtr screen = IntPtr.Zero, mem = IntPtr.Zero, bmp = IntPtr.Zero, old = IntPtr.Zero;
         try
         {
+            screen = GetDC(IntPtr.Zero);
+            if (screen == IntPtr.Zero) throw new InvalidOperationException("Could not access the display.");
+            mem = CreateCompatibleDC(screen);
+            bmp = CreateCompatibleBitmap(screen, width, height);
+            if (mem == IntPtr.Zero || bmp == IntPtr.Zero) throw new InvalidOperationException("Could not allocate the screen capture.");
+            old = SelectObject(mem, bmp);
+            if (old == IntPtr.Zero || old == new IntPtr(-1)) throw new InvalidOperationException("Could not prepare the screen capture.");
             if (!BitBlt(mem, 0, 0, width, height, screen, x, y, SRCCOPY | CAPTUREBLT)) throw new InvalidOperationException("BitBlt failed.");
             SelectObject(mem, old);
             var bi = new BITMAPINFOHEADER { biSize = Marshal.SizeOf<BITMAPINFOHEADER>(), biWidth = width, biHeight = -height, biPlanes = 1, biBitCount = 32 };
-            var bits = new byte[width * height * 4];
-            GetDIBits(mem, bmp, 0, (uint)height, bits, ref bi, 0);
+            var bits = new byte[checked(width * height * 4)];
+            if (GetDIBits(mem, bmp, 0, (uint)height, bits, ref bi, 0) != height) throw new InvalidOperationException("Could not read the complete screen capture.");
             for (int i = 3; i < bits.Length; i += 4) bits[i] = 255;
             return new CapturedImage(bits, width, height);
         }
-        finally { DeleteObject(bmp); DeleteDC(mem); ReleaseDC(IntPtr.Zero, screen); }
+        finally
+        {
+            if (old != IntPtr.Zero && old != new IntPtr(-1) && mem != IntPtr.Zero) SelectObject(mem, old);
+            if (bmp != IntPtr.Zero) DeleteObject(bmp);
+            if (mem != IntPtr.Zero) DeleteDC(mem);
+            if (screen != IntPtr.Zero) ReleaseDC(IntPtr.Zero, screen);
+        }
     }
 }

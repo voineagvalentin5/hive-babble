@@ -1,0 +1,74 @@
+{
+  "startedUtc": "2026-10-29T22:57:53.3018469+00:00",
+  "completedUtc": "2026-10-29T22:58:00.8018293+00:00",
+  "allPassed": true,
+  "dpiScaleX": 1.25,
+  "dpiScaleY": 1.25,
+  "checks": [
+    {
+      "Name": "programmatic_move",
+      "Passed": true,
+      "Detail": "Physical position 50,125 -\u003E 90,155. Mouse dragging is a separate manual check."
+    },
+    {
+      "Name": "toolbar_move_follows_frame",
+      "Passed": true,
+      "Detail": "Frame 120,175 900x400; toolbar 120,100 900x75. Exercises the same position coupling used by DragMove."
+    },
+    {
+      "Name": "programmatic_resize",
+      "Passed": true,
+      "Detail": "Physical size 900x400 -\u003E 960x440."
+    },
+    {
+      "Name": "resize_corner_hit_test",
+      "Passed": true,
+      "Detail": "WM_NCHITTEST at bottom-right returned 17; expected HTBOTTOMRIGHT (17)."
+    },
+    {
+      "Name": "topmost_styles",
+      "Passed": true,
+      "Detail": "Frame and toolbar have WS_EX_TOPMOST and were placed above a temporary topmost diagnostic background."
+    },
+    {
+      "Name": "capture_affinity",
+      "Passed": true,
+      "Detail": "Both frame and toolbar must report WDA_EXCLUDEFROMCAPTURE; actual pixels are tested below."
+    },
+    {
+      "Name": "background_capture_allowed",
+      "Passed": true,
+      "Detail": "The background runs in a separate process and has no capture exclusion."
+    },
+    {
+      "Name": "locked_click_through",
+      "Passed": true,
+      "Detail": "WS_EX_TRANSPARENT=True; center HWND=BF0BF0, background HWND=BF0BF0."
+    },
+    {
+      "Name": "toolbar_remains_interactive",
+      "Passed": true,
+      "Detail": "Toolbar WS_EX_TRANSPARENT=False; hit HWND=10DFA, toolbar HWND=10DFA."
+    },
+    {
+      "Name": "capture_shows_underlying_pixels",
+      "Passed": true,
+      "Detail": "Center sample must match synthetic background RGB 24,74,99 despite the opaque magenta overlay."
+    },
+    {
+      "Name": "overlay_excluded_from_capture",
+      "Passed": true,
+      "Detail": "Before/after changed pixels=0; magenta pixels=0. The marker is visible in the separate WPF preview."
+    },
+    {
+      "Name": "unlock_restores_interaction",
+      "Passed": true,
+      "Detail": "Unlock removes WS_EX_TRANSPARENT and restores ResizeMode.CanResize."
+    }
+  ],
+  "limitations": [
+    "Programmatic native-window checks; no physical mouse input was synthesized.",
+    "Browser, PDF, borderless game, and mixed-monitor/scaling interaction require separate live checks.",
+    "frame-render-preview.png is a labeled WPF render composite. capture-*.png are actual ScreenCapturer output."
+  ]
+}

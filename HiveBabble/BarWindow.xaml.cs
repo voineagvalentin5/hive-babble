@@ -19,7 +19,7 @@ public partial class BarWindow : Window
         };
         LocationChanged += (_, _) => _frame.FollowBar();
     }
-    public void SetLockedVisual(bool locked) => LockButton.Content = locked ? "白 Unlock" : "箔 Lock";
+    public void SetLockedVisual(bool locked) => LockButton.Content = locked ? "Unlock" : "Lock";
     public void SetPausedVisual(bool paused) => PauseButton.Content = paused ? "Resume" : "Pause";
     void Bar_MouseLeftButtonDown(object s, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) DragMove(); }
     void Lock_Click(object s, RoutedEventArgs e) => _frame.ToggleLock();
