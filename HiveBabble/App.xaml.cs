@@ -10,6 +10,13 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         int fixtureIndex = Array.IndexOf(e.Args, "--diagnostic-backdrop");
+        if (Array.IndexOf(e.Args, "--sample-scene") >= 0)
+        {
+            base.OnStartup(e);
+            MainWindow = SampleScene.Create();
+            MainWindow.Show();
+            return;
+        }
         if (fixtureIndex < 0) { base.OnStartup(e); MainWindow = new FrameWindow(); MainWindow.Show(); return; }
 
         // A separate test process renders only the known background, with no protected frame.

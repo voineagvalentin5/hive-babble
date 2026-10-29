@@ -1,0 +1,82 @@
+{
+  "completedUtc": "2026-10-29T23:03:53.2365301+00:00",
+  "allPassed": true,
+  "checks": [
+    {
+      "Name": "deepl_missing_key",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "google_missing_key",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "malformed_key",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "invalid_libre_url",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "google_wire_format_html_decode_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "deepl_free_endpoint_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "libre_wire_format_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "deepl_http_403_safe_error_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "deepl_http_429_safe_error_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "deepl_http_456_safe_error_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "deepl_http_503_safe_error_and_disposal",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "malformed_response_is_safe",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "timeout_is_actionable",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "local_offline_is_actionable_and_safe",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    },
+    {
+      "Name": "dpapi_roundtrip_clear_and_corruption",
+      "Passed": true,
+      "Detail": "Passed with intercepted HTTP or in-memory settings."
+    }
+  ],
+  "limitations": "HTTP was intercepted. Live cloud credentials, access, quota and translation quality were not verified. DPAPI used only an in-memory test value."
+}

@@ -1,16 +1,23 @@
 <Window x:Class="HiveBabble.SidePanelWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Hive-Babble Results" Width="320" Height="400"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Hive-Babble Results" Width="360" Height="430"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize">
-  <Border Background="#F21E1E1E" BorderBrush="#E0A526" BorderThickness="2">
-    <DockPanel Margin="8">
-      <DockPanel DockPanel.Dock="Top" LastChildFill="False">
-        <TextBlock Foreground="#E0A526" FontWeight="Bold" VerticalAlignment="Center" Text="Translation"/>
-        <Button DockPanel.Dock="Right" Style="{StaticResource BarButton}" Content="×" Click="Hide_Click"/>
-        <Button DockPanel.Dock="Right" Style="{StaticResource BarButton}" Content="Copy" Click="Copy_Click"/>
+  <Border Background="#FA151A20" BorderBrush="#414A50" BorderThickness="1" CornerRadius="12">
+    <Grid Margin="22">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <DockPanel LastChildFill="True">
+        <Button DockPanel.Dock="Right" Style="{StaticResource BarButton}" Background="Transparent" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" ToolTip="Hide results" AutomationProperties.Name="Hide results" Click="Hide_Click"/>
+        <TextBlock Foreground="#E0A526" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Text="TRANSLATION"/>
       </DockPanel>
-      <TextBlock x:Name="StatusLine" DockPanel.Dock="Bottom" Foreground="#99E0A526" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
-      <TextBox x:Name="ResultBox" Margin="0,8,0,0" Background="Transparent" Foreground="#F5F5F5" BorderThickness="0"
-               IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontSize="14"/>
-    </DockPanel>
+      <TextBlock Grid.Row="1" Foreground="#F2F0E9" FontWeight="SemiBold" FontSize="24" Margin="0,9,0,18" Text="A world of words."/>
+      <TextBox x:Name="ResultBox" Grid.Row="2" Background="Transparent" Foreground="#E8ECF0" BorderThickness="0"
+               IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" FontFamily="Segoe UI" FontSize="16" Padding="0,0,8,0"/>
+      <Border Grid.Row="3" BorderBrush="#313940" BorderThickness="0,1,0,0" Margin="0,18,0,14" Padding="0,12,0,0">
+        <TextBlock x:Name="StatusLine" Foreground="#94A0AC" FontSize="11" TextWrapping="Wrap"/>
+      </Border>
+      <DockPanel Grid.Row="4">
+        <Button x:Name="CopyButton" DockPanel.Dock="Right" Style="{StaticResource BarButton}" Content="Copy translation" Click="Copy_Click"/>
+        <TextBlock Foreground="#697782" FontSize="10" VerticalAlignment="Center" Text="HIVE LABS"/>
+      </DockPanel>
+    </Grid>
   </Border>
 </Window>

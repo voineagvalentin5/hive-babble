@@ -1,0 +1,40 @@
+{
+  "startedUtc": "2026-10-29T23:02:08.6874451+00:00",
+  "completedUtc": "2026-10-29T23:02:17.7440075+00:00",
+  "allPassed": true,
+  "elapsedMs": 4074,
+  "sourceText": "Hola, mundo.\nEl gato duerme en la casa.\nGracias por leer con nosotros.",
+  "translatedText": "Hey, world.\nThe cat sleeps in the house.\nThanks for reading with us.",
+  "checks": [
+    {
+      "Name": "screen_capture_and_ocr",
+      "Passed": true,
+      "Detail": "The captured Spanish sample must contain gato and casa."
+    },
+    {
+      "Name": "local_translation",
+      "Passed": true,
+      "Detail": "The real local translation must contain cat and house."
+    },
+    {
+      "Name": "side_panel_visible",
+      "Passed": true,
+      "Detail": "The translated result is displayed in the side panel."
+    },
+    {
+      "Name": "copy_roundtrip",
+      "Passed": true,
+      "Detail": "Copy uses the actual side-panel action; previous clipboard text is restored immediately."
+    },
+    {
+      "Name": "missing_key_message",
+      "Passed": true,
+      "Detail": "Selecting DeepL without a key must show an actionable message and keep the app alive."
+    }
+  ],
+  "limitations": [
+    "Cloud providers are not called; missing credentials are checked locally.",
+    "Preview is a WPF render composite; sample-capture.png contains actual captured pixels.",
+    "This exercises SnapAsync directly. The global translation hotkey requires a separate live input check."
+  ]
+}

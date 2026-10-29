@@ -25,6 +25,10 @@ public partial class FrameWindow : Window
     readonly ScreenCapturer _capturer = new();
     public bool ExcludedFromCapture { get; private set; }
     public AppSettings Settings { get; } = AppSettings.Load();
+    public string LastSourceText { get; private set; } = "";
+    public string LastTranslatedText { get; private set; } = "";
+    public string LastStatus { get; private set; } = "";
+    public SidePanelWindow? ResultsPanel => _panel;
 
     public FrameWindow()
     {
@@ -61,10 +65,23 @@ public partial class FrameWindow : Window
         _bar = new BarWindow(this); _panel = new SidePanelWindow(this);
         PlaceChildren(); _bar.Show(); UpdateStatus();
         Log.Write($"Started. Provider={Settings.Provider} OCR languages available: {SafeOcrLanguages()}");
+        if (Arg("--verify-providers") is string providerDirectory)
+        {
+            await Diagnostics.ProviderVerification.RunAsync(providerDirectory);
+            Close();
+            return;
+        }
         if (Arg("--verify-frame") is string directory)
         {
             try { await Diagnostics.FrameVerification.RunAsync(this, directory); }
             catch (Exception ex) { Log.Write("Frame verification failed: " + ex); }
+            Close();
+            return;
+        }
+        if (Arg("--verify-translation") is string translationDirectory)
+        {
+            try { await Diagnostics.TranslationVerification.RunAsync(this, translationDirectory); }
+            catch (Exception ex) { Log.Write("Translation verification failed: " + ex.GetType().Name); }
             Close();
             return;
         }
@@ -102,6 +119,8 @@ public partial class FrameWindow : Window
     {
         if (_busy || _paused) { if (_paused) ShowStatus("Paused · press Resume to snap"); return; }
         _busy = true;
+        LastSourceText = "";
+        LastTranslatedText = "";
         var sw = Stopwatch.StartNew();
         try
         {
@@ -112,20 +131,23 @@ public partial class FrameWindow : Window
             var ocr = new WindowsOcrEngine(string.IsNullOrWhiteSpace(Settings.OcrLanguage) ? null : Settings.OcrLanguage);
             var lines = await ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
             var source = string.Join("\n", lines.Select(l => l.Text));
-            Log.Write($"Snap {img.Width}x{img.Height}px OCR[{ocr.LanguageTag}] {lines.Count} lines: {source.Replace("\n", " | ")}");
+            LastSourceText = source;
+            Log.Write($"Snap {img.Width}x{img.Height}px OCR[{ocr.LanguageTag}] {lines.Count} lines.");
             if (lines.Count == 0) { ShowPanel("", "No text found inside the frame."); return; }
             var tr = TranslatorFactory.Create(Settings);
             var translated = await tr.TranslateAsync(source, Settings.SourceLanguage, Settings.TargetLanguage);
-            Log.Write($"Translated via {tr.Name} -> {Settings.TargetLanguage} in {sw.ElapsedMilliseconds} ms: {translated.Replace("\n", " | ")}");
+            Log.Write($"Translated via {tr.Name} -> {Settings.TargetLanguage} in {sw.ElapsedMilliseconds} ms.");
             ShowPanel(translated, $"{tr.Name} · {lines.Count} lines · {sw.ElapsedMilliseconds} ms");
         }
         catch (TranslatorException ex) { Log.Write("Translator: " + ex.Message); ShowPanel("", ex.Message); }
-        catch (Exception ex) { Log.Write("Snap failed: " + ex); ShowPanel("", "Snap failed: " + ex.Message); }
+        catch (Exception ex) { Log.Write("Snap failed: " + ex.GetType().Name); ShowPanel("", "Capture or recognition failed. Try a smaller area or check the OCR language in Settings."); }
         finally { _busy = false; UpdateStatus(); }
     }
 
     void ShowPanel(string text, string status)
     {
+        LastTranslatedText = text;
+        LastStatus = status;
         if (_panel == null) return;
         _panel.ShowResult(text, status);
         if (!_panel.IsVisible) _panel.Show();

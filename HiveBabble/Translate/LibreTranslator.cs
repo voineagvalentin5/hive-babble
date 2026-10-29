@@ -1,33 +1,32 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 namespace HiveBabble.Translate;
 /// <summary>LibreTranslate HTTP API (default: local offline Argos server at http://127.0.0.1:5000, no key).</summary>
-public sealed class LibreTranslator(string baseUrl, string? apiKey = null) : ITranslator
+public sealed class LibreTranslator : ITranslator
 {
-    static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+    readonly string _baseUrl;
+    readonly string? _apiKey;
+    readonly HttpClient _http;
+    public LibreTranslator(string baseUrl, string? apiKey = null) : this(baseUrl, apiKey, TranslatorHttp.Shared) { }
+    internal LibreTranslator(string baseUrl, string? apiKey, HttpClient client) { _baseUrl = baseUrl; _apiKey = apiKey; _http = client; }
     public string Name => "Libre (local)";
     public async Task<string> TranslateAsync(string text, string? sourceLang, string targetLang)
     {
-        var url = baseUrl.TrimEnd('/') + "/translate";
-        HttpResponseMessage resp;
-        try
+        if (string.IsNullOrWhiteSpace(text)) return "";
+        if (!Uri.TryCreate(_baseUrl?.Trim(), UriKind.Absolute, out var endpoint) ||
+            (endpoint.Scheme != Uri.UriSchemeHttp && endpoint.Scheme != Uri.UriSchemeHttps) ||
+            endpoint.UserInfo.Length != 0 || endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
+            throw new TranslatorException("Enter a valid HTTP or HTTPS translator server URL in Settings, without credentials or query parameters.");
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint.AbsoluteUri.TrimEnd('/') + "/translate")
         {
-            resp = await Http.PostAsJsonAsync(url, new { q = text, source = string.IsNullOrEmpty(sourceLang) ? "auto" : sourceLang, target = targetLang, format = "text", api_key = apiKey ?? "" });
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            throw new TranslatorException($"Local translator not running at {baseUrl}. Run Start-Translator.ps1 in the Hive-Babble folder, then try again.", ex);
-        }
-        var body = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode)
-        {
-            string err = body;
-            try { err = JsonDocument.Parse(body).RootElement.GetProperty("error").GetString() ?? body; } catch { }
-            throw new TranslatorException($"Libre translator error ({(int)resp.StatusCode}): {err}");
-        }
-        return JsonDocument.Parse(body).RootElement.GetProperty("translatedText").GetString() ?? "";
+            Content = JsonContent.Create(new { q = text, source = TranslatorHttp.Source(sourceLang) ?? "auto",
+                target = TranslatorHttp.Target(targetLang), format = "text", api_key = _apiKey ?? "" })
+        };
+        return await TranslatorHttp.SendAsync(_http, request, "LibreTranslate", json => json.GetProperty("translatedText").GetString(),
+            status => status == 400 ? "LibreTranslate rejected the request. Check the selected languages and installed translation models." : TranslatorHttp.StatusMessage("LibreTranslate", status),
+            endpoint.IsLoopback ? "Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again."
+                : "Could not reach LibreTranslate. Check the server URL and connection in Settings.");
     }
 }
