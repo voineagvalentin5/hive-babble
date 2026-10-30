@@ -18,7 +18,7 @@ public partial class BarWindow : Window
         SourceInitialized += (_, _) =>
         {
             var h = new WindowInteropHelper(this).Handle;
-            ExcludedFromCapture = Native.SetWindowDisplayAffinity(h, Native.WDA_EXCLUDEFROMCAPTURE);
+            ExcludedFromCapture = Native.SetWindowDisplayAffinity(h, Native.WDA_EXCLUDEFROMCAPTURE); Glass.Enable(new System.Windows.Interop.WindowInteropHelper(this).Handle);
             Native.SetWindowLong(h, Native.GWL_EXSTYLE, Native.GetWindowLong(h, Native.GWL_EXSTYLE) | Native.WS_EX_TOOLWINDOW);
         };
         LocationChanged += (_, _) => _frame.FollowBar();

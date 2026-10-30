@@ -11,9 +11,9 @@ namespace HiveBabble;
 public sealed class OverlayRenderer
 {
     static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    static readonly Brush Fill = Freeze(new SolidColorBrush(Color.FromRgb(0x15, 0x1A, 0x20)));
+    static readonly Brush Fill = Freeze(new LinearGradientBrush(Color.FromArgb(0xF0, 0x2A, 0x31, 0x3A), Color.FromArgb(0xF0, 0x15, 0x1A, 0x20), 90));
     static readonly Brush Ink = Freeze(new SolidColorBrush(Color.FromRgb(0xF2, 0xF0, 0xE9)));
-    static readonly Brush Edge = Freeze(new SolidColorBrush(Color.FromArgb(0x99, 0xE0, 0xA5, 0x26)));
+    static readonly Brush Edge = Freeze(new SolidColorBrush(Color.FromArgb(0x66, 0xFF, 0xFF, 0xFF)));
     static Brush Freeze(Brush b) { b.Freeze(); return b; }
 
     public void Clear(Canvas canvas) => canvas.Children.Clear();
@@ -32,7 +32,7 @@ public sealed class OverlayRenderer
             double size = FitFont(t, w - 6, h - 2, ppd);
             var box = new Border
             {
-                Background = Fill, BorderBrush = Edge, BorderThickness = new Thickness(0, 0, 0, 1), CornerRadius = new CornerRadius(2),
+                Background = Fill, BorderBrush = Edge, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(4),
                 Width = w, Height = h, Padding = new Thickness(3, 0, 3, 0),
                 Child = new TextBlock { Text = t, FontFamily = Face.FontFamily, FontWeight = Face.Weight, FontSize = size, Foreground = Ink,
                     VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.NoWrap }

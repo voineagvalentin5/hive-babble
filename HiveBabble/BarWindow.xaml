@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Hive-Babble Bar" Height="60" Width="720" WindowStyle="None" AllowsTransparency="True"
         Background="Transparent" Topmost="True" ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False">
-  <Border Background="#151A20" BorderBrush="#46504D" BorderThickness="1,1,1,0" CornerRadius="12,12,0,0" MouseLeftButtonDown="Bar_MouseLeftButtonDown">
+  <Border BorderBrush="#55FFFFFF" BorderThickness="1,1,1,0" CornerRadius="12,12,0,0" MouseLeftButtonDown="Bar_MouseLeftButtonDown">
+    <Border.Background><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="#33FFFFFF" Offset="0"/><GradientStop Color="#0DFFFFFF" Offset="0.45"/><GradientStop Color="#1A151A20" Offset="1"/></LinearGradientBrush></Border.Background>
     <DockPanel LastChildFill="True" Margin="12,8">
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
         <Button x:Name="LockButton" Style="{StaticResource BarButton}" Content="Lock" ToolTip="Click through the frame · Ctrl+Alt+L" Click="Lock_Click"/>
