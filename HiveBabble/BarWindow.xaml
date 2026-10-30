@@ -1,4 +1,4 @@
-<Window x:Class="HiveBabble.BarWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window Icon="pack://application:,,,/app.ico" x:Class="HiveBabble.BarWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Hive-Babble Bar" Height="60" Width="720" WindowStyle="None" AllowsTransparency="True"
         Background="Transparent" Topmost="True" ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False">

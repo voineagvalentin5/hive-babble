@@ -17,7 +17,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add("Settings\u2026", null, (_, _) => f.OpenSettings(f));
         menu.Items.Add(new WinForms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => f.Close());
-        _icon = new WinForms.NotifyIcon { Text = "Hive-Babble", Icon = CreateIcon(), ContextMenuStrip = menu, Visible = true };
+        _icon = new WinForms.NotifyIcon { Text = "Hive-Babble", Icon = LoadAppIcon(), ContextMenuStrip = menu, Visible = true };
         _icon.DoubleClick += (_, _) => f.ToggleVisible();
     }
     public bool Visible => _icon.Visible;
@@ -35,4 +35,9 @@ public sealed class TrayIcon : IDisposable
         return Icon.FromHandle(bmp.GetHicon());
     }
     public void Dispose() { _icon.Visible = false; _icon.Dispose(); }
+    static System.Drawing.Icon LoadAppIcon()
+    {
+        try { var exe = Environment.ProcessPath; if (exe != null && System.Drawing.Icon.ExtractAssociatedIcon(exe) is System.Drawing.Icon ic) return new System.Drawing.Icon(ic, 16, 16); } catch { }
+        return CreateIcon();
+    }
 }
