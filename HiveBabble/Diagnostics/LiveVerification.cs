@@ -21,6 +21,30 @@ public static class LiveVerification
     sealed record Check(string Name, bool Passed, string Detail);
     [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
     [DllImport("dwmapi.dll")] static extern int DwmFlush();
+    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hwnd, out Native.RECT rect);
+
+    // Diagnostic evidence only: stop processing, briefly expose these synthetic-scene windows
+    // to capture, take a real desktop screenshot, and immediately restore their protection.
+    static async Task SaveLiveScreenshot(FrameWindow frame, string path)
+    {
+        frame.StopLoop();
+        var handles = new[] { new WindowInteropHelper(frame).Handle,
+            frame.Bar == null ? IntPtr.Zero : new WindowInteropHelper(frame.Bar).Handle };
+        try
+        {
+            foreach (var h in handles.Where(h => h != IntPtr.Zero)) Native.SetWindowDisplayAffinity(h, 0);
+            await frame.Dispatcher.InvokeAsync(frame.UpdateLayout, DispatcherPriority.Render);
+            await Task.Delay(250); DwmFlush();
+            GetWindowRect(handles[0], out var f);
+            GetWindowRect(handles[1], out var b);
+            var capture = new Capture.ScreenCapturer().CaptureRect(f.Left, b.Top, f.Right - f.Left, f.Bottom - b.Top);
+            SavePng(capture, path);
+        }
+        finally
+        {
+            foreach (var h in handles.Where(h => h != IntPtr.Zero)) Native.SetWindowDisplayAffinity(h, Native.WDA_EXCLUDEFROMCAPTURE);
+        }
+    }
 
     static async Task<bool> WaitFor(Func<bool> condition, int timeoutMs)
     {
@@ -178,6 +202,8 @@ public static class LiveVerification
             Add("Japanese -> English translated", frame.LastTranslatedText.Contains("cat", StringComparison.OrdinalIgnoreCase) || frame.LastTranslatedText.Contains("Hello", StringComparison.OrdinalIgnoreCase), frame.LastTranslatedText.Replace("\n", " | "));
             Add("Japanese source auto-detected", frame.LastDetectedLanguage == "ja", $"detected={frame.LastDetectedLanguage ?? "(none)"}");
             Add("Japanese overlay within 1.5 s", jaMs <= 1500 && frame.Overlay.Children.Count > 0, $"{jaMs} ms from loop start (pipeline {st.LastLatencyMs} ms, OCR {st.LastOcrMs} ms), boxes={frame.Overlay.Children.Count}");
+            if (frame.Overlay.Children.Count > 0 && frame.LastSourceText.Contains("猫"))
+                await SaveLiveScreenshot(frame, Path.Combine(outputDirectory, "japanese-live.png"));
         }
         catch (Exception ex) { Add("Run completed", false, ex.GetType().Name + ": " + ex.Message); }
         finally

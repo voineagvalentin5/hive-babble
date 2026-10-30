@@ -43,3 +43,15 @@ Translator restarted with `Start-Translator.ps1 -Languages en,ja,zh,ko,es,fr,de,
   overlay "Hello world. | The cat is sleeping in the house. | Thank you for reading。"; detected=ja; 127 ms from loop start
 - Note: first request per language after a translator restart is slow (es 5.6 s, ja 2.1 s cold); startup warm-up now primes es/ja/zh/ko/fr/de (~11 s, background).
 - NOT VERIFIED: mixed-DPI multi-monitor, real DeepL key, real games/apps, zh/ko on-screen OCR (no packs installed).
+
+## Independent recheck and interaction fixes (2026-10-30)
+
+The current implementation passed all 20 real local live-flow checks again at 125% scaling. The warmed Spanish overlay appeared in 370 ms and Japanese in 113 ms. Japanese OCR selected `auto:ja` and translated the synthetic Japanese sample correctly. See `artifacts/recheck/live-verification.json`.
+
+Seven additional regression checks passed in `artifacts/interactions/interaction-verification.json`. They verify redraw after moving away and back to identical pixels; suppression of outstanding results after Pause, Hide, and settings changes; cleared caches staying cleared after an old response; recovery with new settings; and provider cooldown despite a changing screen. These checks use real capture/OCR and deliberately delayed synthetic translations.
+
+The fixes invalidate pending results when the frame or settings change, clear provider caches on settings changes, and apply error cooldown independently of frame hashes. Overlay boxes now use an opaque fill so original characters do not show through the translation. The self-contained build is refreshed in `Builds/HiveBabble.exe`.
+
+`artifacts/recheck/japanese-live.png` is an actual desktop screenshot of the synthetic Japanese scene and live English overlay. The diagnostic stops processing, briefly enables capture of its own frame/toolbar, takes the screenshot, and immediately restores capture exclusion. Normal app operation retains exclusion, which the live test verifies separately.
+
+Remaining limits: cloud account access and real game/browser/PDF interaction are not covered by this recheck. Mixed-DPI alignment remains unverified; saved placement also still needs monitor-specific handling for gaps between monitors.

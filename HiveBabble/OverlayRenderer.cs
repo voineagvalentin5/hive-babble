@@ -11,7 +11,7 @@ namespace HiveBabble;
 public sealed class OverlayRenderer
 {
     static readonly Typeface Face = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    static readonly Brush Fill = Freeze(new SolidColorBrush(Color.FromArgb(0xF2, 0x15, 0x1A, 0x20)));
+    static readonly Brush Fill = Freeze(new SolidColorBrush(Color.FromRgb(0x15, 0x1A, 0x20)));
     static readonly Brush Ink = Freeze(new SolidColorBrush(Color.FromRgb(0xF2, 0xF0, 0xE9)));
     static readonly Brush Edge = Freeze(new SolidColorBrush(Color.FromArgb(0x99, 0xE0, 0xA5, 0x26)));
     static Brush Freeze(Brush b) { b.Freeze(); return b; }

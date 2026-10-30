@@ -1,25 +1,65 @@
 # Hive-Babble
-Codex Hive Labs · live on-screen translation window. *Read the world.*
 
-## Build
-`powershell -ExecutionPolicy Bypass -File .\Build-App.ps1` → `Builds\HiveBabble.exe`
+Codex Hive Labs · live on-screen translation for Windows. **Read the world.**
 
-## Use (M2)
-- Drag the gold bar to move, drag the edges to resize. Lock makes the frame click-through (bar stays clickable; Ctrl+Alt+L also toggles).
-- **Ctrl+Alt+T** captures what's inside the frame, OCRs it (Windows OCR, offline), translates it, and shows it in the side panel. **Copy** copies the result.
-- Log: `%APPDATA%\HiveBabble\hivebabble.log`. Settings: `%APPDATA%\HiveBabble\settings.json` (⚙ button).
+## Run
 
-## Start the local translator (free, offline, no key)
-Hive-Babble uses LibreTranslate (Argos models) running on your own PC at `http://127.0.0.1:5000`.
+```powershell
+.\Start-Translator.ps1 -Background
+.\Builds\HiveBabble.exe
 ```
-powershell -ExecutionPolicy Bypass -File .\Start-Translator.ps1
+
+The local translator runs on `http://127.0.0.1:5000`. The default setup includes English, Spanish, and Japanese. Models download on first setup; subsequent translation runs locally without an API key. Python 3.11 is required for this local service. A newly loaded model can take a few seconds on its first translation; background startup warms the Spanish/Japanese models.
+
+## Use
+
+- Drag the toolbar over the text and resize the frame using its edges/corners. Translation starts automatically.
+- **Lock** lets clicks pass through to the app below; the toolbar stays interactive. Shortcut: **Ctrl+Alt+L**.
+- **Pause / Resume** controls live updates. **Ctrl+Alt+T** forces a fresh translation when running.
+- Use the language button to choose the **target** language, including English or Japanese.
+- Use **Overlay**, **Side**, or **Both** to choose where results appear. The side panel includes **Copy translation**.
+- The tray icon provides Show/Hide, Translate, Lock, Pause, Settings, and Exit.
+- Window position and size are saved when you close the app.
+
+## Japanese and other languages
+
+Set Source to `auto`, Target to `en`, and OCR to `auto` for Japanese on-screen text → English. Automatic OCR selects from the Windows OCR languages installed on the machine. English and Japanese OCR are installed on the development machine; other computers need the corresponding Windows language/OCR features.
+
+To translate English into Japanese, choose target **JA**. Translation model availability and OCR availability are separate: a translation model alone cannot recognize an unfamiliar script from the screen.
+
+Add local translation models with, for example:
+
+```powershell
+.\Start-Translator.ps1 -Languages en,es,ja,fr -UpdateModels -Background
 ```
-- First run creates a Python 3.11 venv in `translator\` and downloads only the English↔Spanish models. Leave the window open while you translate.
-- More languages: `.\Start-Translator.ps1 -Languages en,es,fr,ro`
-- If it isn't running, Hive-Babble says "Local translator not running…" instead of crashing.
 
-## DeepL (later)
-Open ⚙ Settings, set Translator to **DeepL**, paste the key (stored encrypted with Windows DPAPI, never in the repo). Free keys ending in `:fx` use api-free.deepl.com automatically.
+Stop the existing local translator before updating its models. The startup script reports a running service with missing languages instead of silently replacing it. The development service currently exposes additional languages beyond the three defaults; the toolbar offers a smaller common-language selection.
 
-## OCR languages
-Windows OCR uses the language packs installed in Windows. For accurate Spanish (ñ, accents) add Spanish in Settings → Time & language → Language & region, then set `OcrLanguage` to `es-ES` in settings.json.
+## Settings and cloud providers
+
+Settings include provider, local server URL, source/target language, OCR language, and update interval (default 750 ms). DeepL and Google Cloud Translation are implemented; enter your provider's API key in Settings to use them. Keys are encrypted with Windows DPAPI for the current user. DeepL Free keys ending in `:fx` use the free API endpoint automatically.
+
+Settings: `%APPDATA%\HiveBabble\settings.json`
+
+Log: `%APPDATA%\HiveBabble\hivebabble.log`
+
+Normal frame logs record counts, timings, and cache hits rather than captured text. Static captures are skipped and translated lines are cached in memory.
+
+## Build and verify
+
+```powershell
+.\Build-App.ps1
+```
+
+This publishes a self-contained Windows x64 executable to `Builds\HiveBabble.exe`. The build script resolves the .NET 8 SDK from PATH or the user-local Microsoft installation.
+
+Diagnostics use synthetic sample windows and write reports into the selected folder:
+
+```powershell
+.\Builds\HiveBabble.exe --verify-frame "$PWD\artifacts\m1"
+.\Builds\HiveBabble.exe --verify-providers "$PWD\artifacts\m2"
+.\Builds\HiveBabble.exe --verify-live "$PWD\artifacts\recheck"
+.\Builds\HiveBabble.exe --verify-interactions "$PWD\artifacts\interactions"
+```
+
+See [VERIFICATION.md](VERIFICATION.md) for measured results and remaining coverage. Real cloud credentials, borderless games, and mixed-DPI multi-monitor behavior require separate validation.

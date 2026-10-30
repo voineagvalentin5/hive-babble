@@ -38,7 +38,8 @@ public partial class FrameWindow : Window
     };
 
     IntPtr _hwnd;
-    bool _locked, _paused, _syncing, _busy, _diagnostic;
+    bool _locked, _paused, _syncing, _busy, _diagnostic, _closed, _settingsOpen;
+    int _frameRevision;
     BarWindow? _bar;
     SidePanelWindow? _panel;
     TrayIcon? _tray;
@@ -47,7 +48,9 @@ public partial class FrameWindow : Window
     readonly DispatcherTimer _loop = new(DispatcherPriority.Background);
     IOcrEngine? _ocr;
     string _lastHash = "";
-    DateTime _retryAt = DateTime.MaxValue;
+    DateTime _retryAt = DateTime.MinValue;
+    internal Func<AppSettings, ITranslator> CreateTranslator { get; set; } = TranslatorFactory.Create;
+    internal bool IsProcessing => _busy;
     public bool ExcludedFromCapture { get; private set; }
     public AppSettings Settings { get; } = AppSettings.Load();
     public TranslationCache Cache { get; } = new();
@@ -72,8 +75,8 @@ public partial class FrameWindow : Window
         if (!ApplyCommandLineRect() && !_diagnostic) RestorePlacement();
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
-        LocationChanged += (_, _) => { PlaceChildren(); _overlay.Clear(OverlayCanvas); };
-        SizeChanged += (_, _) => { PlaceChildren(); _overlay.Clear(OverlayCanvas); };
+        LocationChanged += (_, _) => { PlaceChildren(); ResetFrameHash(); _overlay.Clear(OverlayCanvas); };
+        SizeChanged += (_, _) => { PlaceChildren(); ResetFrameHash(); _overlay.Clear(OverlayCanvas); };
         DpiChanged += (_, _) => { ResetFrameHash(); PlaceChildren(); };
         StateChanged += (_, _) =>
         {
@@ -81,7 +84,7 @@ public partial class FrameWindow : Window
             if (_bar != null) _bar.Visibility = v;
         };
         _loop.Tick += LoopTick;
-        Closing += (_, _) => SavePlacement();
+        Closing += (_, _) => { _closed = true; ResetFrameHash(); SavePlacement(); };
         Closed += (_, _) =>
         {
             _loop.Stop(); _tray?.Dispose();
@@ -161,6 +164,13 @@ public partial class FrameWindow : Window
             Close();
             return;
         }
+        if (Arg("--verify-interactions") is string interactionDirectory)
+        {
+            try { await Diagnostics.InteractionVerification.RunAsync(this, interactionDirectory); }
+            catch (Exception ex) { Log.Write("Interaction verification failed: " + ex.GetType().Name); }
+            Close();
+            return;
+        }
         _ = WarmUpTranslator();
         StartLoop();
         if (Arg("--autosnap") is string s)
@@ -222,15 +232,15 @@ public partial class FrameWindow : Window
         _loop.Start();
         LoopTick(null, EventArgs.Empty);
     }
-    public void StopLoop() => _loop.Stop();
+    public void StopLoop() { _loop.Stop(); _frameRevision++; if (_busy) _lastHash = ""; }
     /// <summary>Forces the next tick to re-OCR even if the pixels did not change (settings, language or mode change).</summary>
     public void ResetOcr() { _ocr = null; ResetFrameHash(); }
     public string OcrTag => _ocr?.LanguageTag ?? "";
-    public void ResetFrameHash() { _lastHash = ""; _retryAt = DateTime.MaxValue; }
+    public void ResetFrameHash() { _frameRevision++; _lastHash = ""; _retryAt = DateTime.MinValue; }
 
     async void LoopTick(object? sender, EventArgs e)
     {
-        if (_busy || _paused || !IsVisible || WindowState == WindowState.Minimized) return;
+        if (_busy || _paused || _closed || _settingsOpen || !IsVisible || WindowState == WindowState.Minimized) return;
         await ProcessFrameAsync(force: false);
     }
 
@@ -245,8 +255,11 @@ public partial class FrameWindow : Window
     /// <summary>Capture, hash, OCR, translate (cached per line), render. Returns true if the frame was processed. Never throws.</summary>
     public async Task<bool> ProcessFrameAsync(bool force)
     {
-        if (_busy || _hwnd == IntPtr.Zero) return false;
+        if (_busy || _paused || _closed || _settingsOpen || !IsVisible || _hwnd == IntPtr.Zero) return false;
+        if (!force && DateTime.UtcNow < _retryAt) return false;
         _busy = true;
+        int revision = _frameRevision;
+        bool IsCurrent() => revision == _frameRevision && !_closed && !_paused && !_settingsOpen && IsVisible;
         var sw = Stopwatch.StartNew();
         try
         {
@@ -254,12 +267,13 @@ public partial class FrameWindow : Window
             var img = _capturer.CaptureRect(r.Left + CaptureInset, r.Top + CaptureInset, r.Right - r.Left - 2 * CaptureInset, r.Bottom - r.Top - 2 * CaptureInset);
             string hash = Convert.ToHexString(SHA256.HashData(img.Bgra));
             Stats.Captures++; Stats.LastHash = hash;
-            if (!force && hash == _lastHash && DateTime.Now < _retryAt) { Stats.Skipped++; return false; }
-            _lastHash = hash; _retryAt = DateTime.MaxValue;
+            if (!force && hash == _lastHash) { Stats.Skipped++; return false; }
+            _lastHash = hash;
             CaptureTap?.Invoke(img);
 
-            _ocr ??= (string.IsNullOrWhiteSpace(Settings.OcrLanguage) || Settings.OcrLanguage.Trim().Equals("auto", StringComparison.OrdinalIgnoreCase)) ? new AutoOcrEngine() : new WindowsOcrEngine(Settings.OcrLanguage);
-            var lines = await _ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
+            var ocr = _ocr ??= (string.IsNullOrWhiteSpace(Settings.OcrLanguage) || Settings.OcrLanguage.Trim().Equals("auto", StringComparison.OrdinalIgnoreCase)) ? new AutoOcrEngine() : new WindowsOcrEngine(Settings.OcrLanguage);
+            var lines = await ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
+            if (!IsCurrent()) return false;
             Stats.LastOcrMs = sw.ElapsedMilliseconds;
             LastLines = lines;
             LastSourceText = string.Join("\n", lines.Select(l => l.Text));
@@ -271,13 +285,14 @@ public partial class FrameWindow : Window
                 Stats.Processed++;
                 return true;
             }
-            var tr = TranslatorFactory.Create(Settings);
+            var tr = CreateTranslator(Settings);
             var (translated, hits) = await TranslateLinesAsync(tr, lines);
+            if (!IsCurrent()) return false;
             LastDetectedLanguage = (tr as IDetectsLanguage)?.LastDetectedLanguage ?? (hits == lines.Count ? LastDetectedLanguage : null);
             long ms = sw.ElapsedMilliseconds;
             Stats.Processed++; Stats.CacheHits += hits; Stats.CacheLookups += lines.Count; Stats.LastLatencyMs = ms;
             string detected = LastDetectedLanguage != null ? $" detected={LastDetectedLanguage}" : "";
-            Log.Write($"Frame {img.Width}x{img.Height}px OCR[{_ocr.LanguageTag}] {lines.Count} lines {Stats.LastOcrMs} ms; {tr.Name} {Settings.SourceLanguage}->{Settings.TargetLanguage}{detected}; cache {hits}/{lines.Count}; total {ms} ms.");
+            Log.Write($"Frame {img.Width}x{img.Height}px OCR[{ocr.LanguageTag}] {lines.Count} lines {Stats.LastOcrMs} ms; {tr.Name} {Settings.SourceLanguage}->{Settings.TargetLanguage}{detected}; cache {hits}/{lines.Count}; total {ms} ms.");
             string status = $"{tr.Name} \u00b7 {lines.Count} lines \u00b7 {hits} cached \u00b7 {ms} ms";
             LastTranslatedText = string.Join("\n", translated);
             LastStatus = status;
@@ -291,15 +306,16 @@ public partial class FrameWindow : Window
             else { _panel?.Hide(); ShowStatus(status); }
             return true;
         }
-        catch (TranslatorException ex) { Fail("Translator: " + ex.Message, ex.Message); return true; }
-        catch (Exception ex) { Fail("Frame failed: " + ex.GetType().Name + " " + ex.Message, "Capture or recognition failed. Try a smaller area or check the OCR language in Settings."); return true; }
+        catch (TranslatorException ex) { if (!IsCurrent()) return false; Fail("Translator: " + ex.Message, ex.Message); return true; }
+        catch (Exception ex) { if (!IsCurrent()) return false; Fail("Frame failed: " + ex.GetType().Name, "Capture or recognition failed. Try a smaller area or check the OCR language in Settings."); return true; }
         finally { _busy = false; }
     }
 
     void Fail(string log, string message)
     {
         Stats.Errors++;
-        _retryAt = DateTime.Now.AddSeconds(5); // a static frame retries every 5 s instead of every tick
+        _lastHash = "";
+        _retryAt = DateTime.UtcNow.AddSeconds(5); // moving backgrounds also respect provider cooldown
         Log.Write(log);
         _overlay.Clear(OverlayCanvas);
         LastTranslatedText = "";
@@ -310,6 +326,7 @@ public partial class FrameWindow : Window
     /// <summary>M4: per-line cache. Only uncached lines are sent, joined in one request (one line per row).</summary>
     async Task<(string[] Lines, int Hits)> TranslateLinesAsync(ITranslator tr, IReadOnlyList<OcrLine> lines)
     {
+        int revision = _frameRevision;
         string src = Settings.SourceLanguage, tgt = Settings.TargetLanguage, provider = tr.Name;
         var result = new string[lines.Count];
         var miss = new List<int>();
@@ -329,7 +346,7 @@ public partial class FrameWindow : Window
             for (int j = 0; j < miss.Count; j++)
             {
                 result[miss[j]] = parts[j].Trim();
-                Cache.Set(provider, src, tgt, lines[miss[j]].Text, result[miss[j]]);
+                if (revision == _frameRevision) Cache.Set(provider, src, tgt, lines[miss[j]].Text, result[miss[j]]);
             }
         }
         return (result, hits);
@@ -350,6 +367,7 @@ public partial class FrameWindow : Window
     {
         Settings.TargetLanguage = code; SaveSettingsQuietly();
         _bar?.SetLanguageVisual(code); ResetFrameHash();
+        _overlay.Clear(OverlayCanvas);
         ShowStatus("Target: " + code);
         if (!_loop.IsEnabled && !_diagnostic) _ = SnapAsync();
     }
@@ -367,9 +385,17 @@ public partial class FrameWindow : Window
 
     public void OpenSettings(Window owner)
     {
-        if (new SettingsWindow(Settings) { Owner = owner }.ShowDialog() != true) return;
-        _ocr = null; ResetFrameHash();
+        _settingsOpen = true;
+        ResetFrameHash();
+        try { if (new SettingsWindow(Settings) { Owner = owner }.ShowDialog() == true) ApplySettingsChanges(); }
+        finally { _settingsOpen = false; ResetFrameHash(); }
+    }
+
+    public void ApplySettingsChanges()
+    {
+        _ocr = null; Cache.Clear(); ResetFrameHash(); _overlay.Clear(OverlayCanvas);
         _bar?.SetLanguageVisual(Settings.TargetLanguage);
+        _bar?.SetModeVisual(Settings.Mode);
         if (_loop.IsEnabled) _loop.Interval = TimeSpan.FromMilliseconds(Math.Clamp(Settings.LoopIntervalMs, 100, 10000));
     }
 
@@ -377,7 +403,7 @@ public partial class FrameWindow : Window
     {
         if (IsVisible)
         {
-            _loop.Stop(); _bar?.Hide(); _panel?.Hide(); Hide();
+            StopLoop(); _bar?.Hide(); _panel?.Hide(); Hide();
         }
         else
         {
@@ -420,7 +446,7 @@ public partial class FrameWindow : Window
         UpdateStatus();
     }
 
-    public void TogglePause() { _paused = !_paused; _bar?.SetPausedVisual(_paused); if (!_paused) ResetFrameHash(); UpdateStatus(); }
+    public void TogglePause() { _paused = !_paused; _bar?.SetPausedVisual(_paused); ResetFrameHash(); UpdateStatus(); }
     public void ShowStatus(string s) => StatusText.Text = s;
 
     void UpdateStatus() => StatusText.Text =
