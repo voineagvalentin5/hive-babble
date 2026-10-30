@@ -15,7 +15,7 @@ public partial class App : Application
         if (Array.IndexOf(e.Args, "--sample-scene") >= 0)
         {
             base.OnStartup(e);
-            MainWindow = SampleScene.Create();
+            MainWindow = SampleScene.Create(e.Args.FirstOrDefault(a => a.StartsWith("--sample-lang="))?.Substring(14) ?? "es");
             MainWindow.Show();
             return;
         }

@@ -1,6 +1,6 @@
 {
-  "started": "2026-10-29T19:23:22.2558275-04:00",
-  "finished": "2026-10-29T19:23:53.0994403-04:00",
+  "started": "2026-10-29T20:52:29.5183516-04:00",
+  "finished": "2026-10-29T20:53:14.0571997-04:00",
   "passed": true,
   "checks": [
     {
@@ -21,7 +21,7 @@
     {
       "Name": "Overlay within 1.5 s",
       "Passed": true,
-      "Detail": "282 ms from loop start (pipeline 246 ms, OCR 221 ms)"
+      "Detail": "497 ms from loop start (pipeline 455 ms, OCR 430 ms)"
     },
     {
       "Name": "Box placed at OCR rect (DPI-converted) and font fits",
@@ -36,17 +36,17 @@
     {
       "Name": "Cache hits on static text (logged)",
       "Passed": true,
-      "Detail": "3/3 lines from cache, pipeline 83 ms"
+      "Detail": "3/3 lines from cache, pipeline 163 ms"
     },
     {
       "Name": "Target language picker (en -> ja)",
       "Passed": true,
-      "Detail": "こんにちは、世界。 | 猫は家の中で眠っています。 | お問い合わせ. (83 ms)"
+      "Detail": "こんにちは、世界。 | 猫は家の中で眠っています。 | お問い合わせ. (141 ms)"
     },
     {
       "Name": "Modes Overlay / Side / Both",
       "Passed": true,
-      "Detail": "side=True both=True overlay=True (boxes=3 panelVisible=False status=Libre (local) · 3 lines · 3 cached · 95 ms)"
+      "Detail": "side=True both=True overlay=True (boxes=3 panelVisible=False status=Libre (local) · 3 lines · 3 cached · 107 ms)"
     },
     {
       "Name": "Tray icon present",
@@ -56,32 +56,52 @@
     {
       "Name": "Error message: local translator not running",
       "Passed": true,
-      "Detail": "\"Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again.\" after 2655 ms, loop running=True"
+      "Detail": "\"Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again.\" after 2695 ms, loop running=True"
     },
     {
       "Name": "Error message: invalid server URL",
       "Passed": true,
-      "Detail": "\"Enter a valid HTTP or HTTPS translator server URL in Settings, without credentials or query parameters.\" after 257 ms, loop running=True"
+      "Detail": "\"Enter a valid HTTP or HTTPS translator server URL in Settings, without credentials or query parameters.\" after 234 ms, loop running=True"
     },
     {
       "Name": "Error message: DeepL without key",
       "Passed": true,
-      "Detail": "\"DeepL needs an API key. Add it in Settings, or choose Libre (local).\" after 794 ms, loop running=True"
+      "Detail": "\"DeepL needs an API key. Add it in Settings, or choose Libre (local).\" after 807 ms, loop running=True"
     },
     {
       "Name": "Error message: DeepL malformed key",
       "Passed": true,
-      "Detail": "\"The DeepL API key contains invalid characters. Check it in Settings.\" after 804 ms, loop running=True"
+      "Detail": "\"The DeepL API key contains invalid characters. Check it in Settings.\" after 771 ms, loop running=True"
     },
     {
       "Name": "Error message: Google without key",
       "Passed": true,
-      "Detail": "\"Google needs an API key. Add it in Settings, or choose Libre (local).\" after 802 ms, loop running=True"
+      "Detail": "\"Google needs an API key. Add it in Settings, or choose Libre (local).\" after 785 ms, loop running=True"
     },
     {
       "Name": "Recovers after the backend is fixed",
       "Passed": true,
-      "Detail": "Libre (local) · 3 lines · 0 cached · 72 ms"
+      "Detail": "Libre (local) · 3 lines · 0 cached · 135 ms"
+    },
+    {
+      "Name": "Japanese OCR auto-picked",
+      "Passed": true,
+      "Detail": "ocr=auto:ja; read: こんにちは、世界。 | 猫は家の中で寝ています。 | 読んでくれてありがとう。"
+    },
+    {
+      "Name": "Japanese -> English translated",
+      "Passed": true,
+      "Detail": "Hello world. | The cat is sleeping in the house. | Thank you for reading。"
+    },
+    {
+      "Name": "Japanese source auto-detected",
+      "Passed": true,
+      "Detail": "detected=ja"
+    },
+    {
+      "Name": "Japanese overlay within 1.5 s",
+      "Passed": true,
+      "Detail": "127 ms from loop start (pipeline 123 ms, OCR 119 ms), boxes=3"
     }
   ],
   "metrics": {
@@ -89,23 +109,27 @@
     "monitors": [
       "\\\\.\\DISPLAY1 1920x1080 primary=True"
     ],
-    "warmUpMs": 190,
-    "firstOverlayMs": 282,
-    "firstPipelineMs": 246,
-    "firstOcrMs": 221,
+    "warmUpMs": 11294,
+    "firstOverlayMs": 497,
+    "firstPipelineMs": 455,
+    "firstOcrMs": 430,
     "source": "Hola, mundo.\nEl gato duerme en la casa.\nGracias por leer con nosotros.",
     "translation": "Hey, world.\nThe cat sleeps in the house.\nThanks for reading with us.",
     "detected": "es",
     "staticCaptures": 4,
     "staticSkipped": 4,
-    "cachedPassMs": 83,
+    "cachedPassMs": 163,
+    "jaSource": "こんにちは、世界。\n猫は家の中で寝ています。\n読んでくれてありがとう。",
+    "jaTranslation": "Hello world.\nThe cat is sleeping in the house.\nThank you for reading。",
+    "jaOcr": "auto:ja",
+    "jaFirstMs": 127,
     "stats": {
-      "Captures": 36,
+      "Captures": 37,
       "Skipped": 23,
-      "Processed": 8,
+      "Processed": 9,
       "Errors": 5,
       "CacheHits": 15,
-      "CacheLookups": 24
+      "CacheLookups": 27
     }
   }
 }

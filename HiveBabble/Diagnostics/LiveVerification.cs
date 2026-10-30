@@ -49,7 +49,7 @@ public static class LiveVerification
         try
         {
             s.Provider = TranslatorProvider.Libre; s.LibreUrl = "http://127.0.0.1:5000"; s.SourceLanguage = "auto"; s.TargetLanguage = "en";
-            s.Mode = DisplayMode.Overlay; s.LoopIntervalMs = 750; s.ProtectedApiKey = null;
+            s.Mode = DisplayMode.Overlay; s.LoopIntervalMs = 750; s.ProtectedApiKey = null; s.OcrLanguage = "auto"; frame.ResetOcr();
             frame.Width = 760; frame.Height = 320; frame.Left = 100; frame.Top = 190;
             scene = SampleScene.Start();
             IntPtr sceneHwnd = IntPtr.Zero;
@@ -160,6 +160,24 @@ public static class LiveVerification
             processed = st.Processed; frame.ResetFrameHash();
             await WaitFor(() => st.Processed > processed, 8000);
             Add("Recovers after the backend is fixed", st.Processed > processed && frame.Overlay.Children.Count > 0, $"{frame.LastStatus}");
+
+            // --- Japanese on-screen text -> English (OCR auto-picks the ja recognizer, source auto-detected).
+            frame.StopLoop(); try { scene?.Kill(); scene?.WaitForExit(3000); } catch { }
+            scene = SampleScene.Start("ja");
+            sceneHwnd = IntPtr.Zero;
+            for (int i = 0; i < 100 && sceneHwnd == IntPtr.Zero; i++) { await Task.Delay(100); scene.Refresh(); sceneHwnd = scene.MainWindowHandle; }
+            SetWindowPos(sceneHwnd, new IntPtr(-1), 0, 0, 0, 0, 0x13);
+            SetWindowPos(new WindowInteropHelper(frame).Handle, new IntPtr(-1), 0, 0, 0, 0, 0x13);
+            await Task.Delay(800);
+            frame.Cache.Clear(); frame.ResetOcr(); processed = st.Processed; int jerr = st.Errors;
+            var jsw = Stopwatch.StartNew(); frame.StartLoop();
+            await WaitFor(() => (st.Processed > processed && frame.Overlay.Children.Count > 0) || st.Errors > jerr, 15000);
+            long jaMs = jsw.ElapsedMilliseconds;
+            metrics["jaSource"] = frame.LastSourceText; metrics["jaTranslation"] = frame.LastTranslatedText; metrics["jaOcr"] = frame.OcrTag; metrics["jaFirstMs"] = jaMs;
+            Add("Japanese OCR auto-picked", frame.OcrTag.Contains("ja"), $"ocr={frame.OcrTag}; read: {frame.LastSourceText.Replace("\n", " | ")}");
+            Add("Japanese -> English translated", frame.LastTranslatedText.Contains("cat", StringComparison.OrdinalIgnoreCase) || frame.LastTranslatedText.Contains("Hello", StringComparison.OrdinalIgnoreCase), frame.LastTranslatedText.Replace("\n", " | "));
+            Add("Japanese source auto-detected", frame.LastDetectedLanguage == "ja", $"detected={frame.LastDetectedLanguage ?? "(none)"}");
+            Add("Japanese overlay within 1.5 s", jaMs <= 1500 && frame.Overlay.Children.Count > 0, $"{jaMs} ms from loop start (pipeline {st.LastLatencyMs} ms, OCR {st.LastOcrMs} ms), boxes={frame.Overlay.Children.Count}");
         }
         catch (Exception ex) { Add("Run completed", false, ex.GetType().Name + ": " + ex.Message); }
         finally

@@ -45,7 +45,7 @@ public partial class FrameWindow : Window
     readonly ScreenCapturer _capturer = new();
     readonly OverlayRenderer _overlay = new();
     readonly DispatcherTimer _loop = new(DispatcherPriority.Background);
-    WindowsOcrEngine? _ocr;
+    IOcrEngine? _ocr;
     string _lastHash = "";
     DateTime _retryAt = DateTime.MaxValue;
     public bool ExcludedFromCapture { get; private set; }
@@ -201,7 +201,7 @@ public partial class FrameWindow : Window
         return Task.Run(async () =>
         {
             var sw = Stopwatch.StartNew();
-            try { await tr.TranslateAsync("Hola, buenos d\u00edas.", src, tgt); Log.Write($"Translator warm-up {sw.ElapsedMilliseconds} ms."); }
+            try { foreach (var w in new[] { "Hola, buenos d\u00edas.", "\u3053\u3093\u306b\u3061\u306f\u3001\u4e16\u754c\u3002", "\u4f60\u597d\uff0c\u4e16\u754c\u3002", "\uc548\ub155\ud558\uc138\uc694.", "Bonjour le monde.", "Guten Tag, Welt." }) await tr.TranslateAsync(w, src, tgt); Log.Write($"Translator warm-up {sw.ElapsedMilliseconds} ms."); }
             catch (TranslatorException ex) { Log.Write("Translator warm-up: " + ex.Message); }
             catch (Exception ex) { Log.Write("Translator warm-up failed: " + ex.GetType().Name); }
         });
@@ -224,6 +224,8 @@ public partial class FrameWindow : Window
     }
     public void StopLoop() => _loop.Stop();
     /// <summary>Forces the next tick to re-OCR even if the pixels did not change (settings, language or mode change).</summary>
+    public void ResetOcr() { _ocr = null; ResetFrameHash(); }
+    public string OcrTag => _ocr?.LanguageTag ?? "";
     public void ResetFrameHash() { _lastHash = ""; _retryAt = DateTime.MaxValue; }
 
     async void LoopTick(object? sender, EventArgs e)
@@ -256,7 +258,7 @@ public partial class FrameWindow : Window
             _lastHash = hash; _retryAt = DateTime.MaxValue;
             CaptureTap?.Invoke(img);
 
-            _ocr ??= new WindowsOcrEngine(string.IsNullOrWhiteSpace(Settings.OcrLanguage) ? null : Settings.OcrLanguage);
+            _ocr ??= (string.IsNullOrWhiteSpace(Settings.OcrLanguage) || Settings.OcrLanguage.Trim().Equals("auto", StringComparison.OrdinalIgnoreCase)) ? new AutoOcrEngine() : new WindowsOcrEngine(Settings.OcrLanguage);
             var lines = await _ocr.RecognizeAsync(img.Bgra, img.Width, img.Height);
             Stats.LastOcrMs = sw.ElapsedMilliseconds;
             LastLines = lines;

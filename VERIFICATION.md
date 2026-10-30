@@ -31,3 +31,15 @@ M1 passed on 2026-10-29 after a pending elevation prompt was dismissed. All 12 n
 The real synthetic Spanish screen → Windows OCR → local LibreTranslate → side panel → Copy path passed all five checks in `artifacts/m2/translation-verification.json`. The first full operation took 4074 ms; the 1.5-second live target is not yet established. The sample was correctly recognized as three Spanish lines and translated to English.
 
 All 15 provider checks passed in `artifacts/m2/provider-verification.json`, including missing/invalid credentials, request format, disposal, timeout/offline/quota responses, redaction, and an in-memory DPAPI roundtrip. Cloud HTTP responses were intercepted for those checks; real Google/DeepL account access remains untested.
+
+## M3/M4 + Japanese live verification (2026-10-29 20:52 ET, `HiveBabble.exe --verify-live`, 125% DPI, single monitor)
+Translator restarted with `Start-Translator.ps1 -Languages en,ja,zh,ko,es,fr,de,pt,it,ru,ar,hi,tr,pl,nl,uk,id,vi,th,sv,cs -UpdateModels`:
+21 languages / 42 models loaded (en, ar, zh-Hans, cs, nl, fr, de, hi, id, it, ja, ko, pl, pt, ru, es, sv, th, tr, uk, vi). OCR installed: en-US, ja.
+- PASS es->en overlay: "Hey, world. | The cat sleeps in the house. | Thanks for reading with us."; detected=es; 497 ms from loop start
+- PASS boxes = OCR lines, DPI-correct position, font fits; no feedback loop (with-overlay capture == without; 5/5 static frames skipped)
+- PASS cache 3/3 lines; target picker en->ja; Overlay/Side/Both; tray (7 items); saved placement restored on relaunch
+- PASS clear errors without crash: translator down, bad URL, DeepL no/bad key, Google no key; recovery
+- PASS Japanese on screen -> English: OCR auto-picked ja; read "こんにちは、世界。 | 猫は家の中で寝ています。 | 読んでくれてありがとう。";
+  overlay "Hello world. | The cat is sleeping in the house. | Thank you for reading。"; detected=ja; 127 ms from loop start
+- Note: first request per language after a translator restart is slow (es 5.6 s, ja 2.1 s cold); startup warm-up now primes es/ja/zh/ko/fr/de (~11 s, background).
+- NOT VERIFIED: mixed-DPI multi-monitor, real DeepL key, real games/apps, zh/ko on-screen OCR (no packs installed).
