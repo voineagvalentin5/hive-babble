@@ -7,13 +7,17 @@
     <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
   </WindowChrome.WindowChrome>
   <Grid>
-    <Border Background="#01000000" BorderBrush="#CDE0A526" BorderThickness="1"/>
+    <Border Margin="3" CornerRadius="12" BorderThickness="3" Background="#01000000">
+      <Border.BorderBrush><LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#F5F7D27A" Offset="0"/><GradientStop Color="#E6E0A526" Offset="0.45"/><GradientStop Color="#CC9C6B12" Offset="1"/></LinearGradientBrush></Border.BorderBrush>
+      <Border.Effect><DropShadowEffect Color="#E0A526" BlurRadius="14" ShadowDepth="0" Opacity="0.85"/></Border.Effect>
+    </Border>
+    <Border Margin="6" CornerRadius="9" BorderThickness="1" BorderBrush="#40FFFFFF" IsHitTestVisible="False"/>
     <Canvas x:Name="OverlayCanvas" IsHitTestVisible="False" ClipToBounds="True"/>
     <Border HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="18,0,18,12"
             Background="#F2151A20" CornerRadius="6" Padding="12,7" IsHitTestVisible="False">
       <TextBlock x:Name="StatusText" Foreground="#DDC892" FontSize="11" Text="Ready" TextTrimming="CharacterEllipsis"/>
     </Border>
-    <Grid IsHitTestVisible="False">
+    <Grid IsHitTestVisible="False" Margin="1">
       <Path Fill="#E0A526" HorizontalAlignment="Left" VerticalAlignment="Top" Data="M9,0 L18,5 L18,15 L9,20 L0,15 L0,5 Z"/>
       <Path Fill="#E0A526" HorizontalAlignment="Right" VerticalAlignment="Top" Data="M9,0 L18,5 L18,15 L9,20 L0,15 L0,5 Z"/>
       <Path Fill="#E0A526" HorizontalAlignment="Left" VerticalAlignment="Bottom" Data="M9,0 L18,5 L18,15 L9,20 L0,15 L0,5 Z"/>

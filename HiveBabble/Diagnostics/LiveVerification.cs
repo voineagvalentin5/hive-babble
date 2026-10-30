@@ -26,7 +26,7 @@ public static class LiveVerification
     // Diagnostic evidence only: stop processing, briefly expose these synthetic-scene windows
     // to capture, take a real desktop screenshot, and immediately restore their protection.
     static async Task SaveLiveScreenshot(FrameWindow frame, string path)
-    {
+    { if (Environment.GetEnvironmentVariable("HIVEBABBLE_KEEP_TEST_IMAGES") != "1") return; 
         frame.StopLoop();
         var handles = new[] { new WindowInteropHelper(frame).Handle,
             frame.Bar == null ? IntPtr.Zero : new WindowInteropHelper(frame.Bar).Handle };
@@ -54,7 +54,7 @@ public static class LiveVerification
     }
 
     static void SavePng(HiveBabble.Capture.CapturedImage img, string path)
-    {
+    { if (Environment.GetEnvironmentVariable("HIVEBABBLE_KEEP_TEST_IMAGES") != "1") return; 
         var bmp = System.Windows.Media.Imaging.BitmapSource.Create(img.Width, img.Height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, img.Bgra, img.Width * 4);
         var enc = new System.Windows.Media.Imaging.PngBitmapEncoder(); enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
         using var fs = File.Create(path); enc.Save(fs);

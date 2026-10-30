@@ -1,0 +1,135 @@
+{
+  "started": "2026-10-30T06:11:13.8373816-04:00",
+  "finished": "2026-10-30T06:12:09.033998-04:00",
+  "passed": false,
+  "checks": [
+    {
+      "Name": "Overlay drawn over OCR rects",
+      "Passed": true,
+      "Detail": "3 boxes for 3 OCR lines"
+    },
+    {
+      "Name": "Spanish -> English translated",
+      "Passed": true,
+      "Detail": "Hey, world. | The cat sleeps in the house. | Thanks for reading with us."
+    },
+    {
+      "Name": "Source language auto-detected",
+      "Passed": true,
+      "Detail": "detected=es"
+    },
+    {
+      "Name": "Overlay within 1.5 s",
+      "Passed": false,
+      "Detail": "5292 ms from loop start (pipeline 5261 ms, OCR 521 ms)"
+    },
+    {
+      "Name": "Box placed at OCR rect (DPI-converted) and font fits",
+      "Passed": true,
+      "Detail": "left=38.6 expected=38.6 DIP, w=233 h=39, font=28.9"
+    },
+    {
+      "Name": "No feedback loop (overlay never captured)",
+      "Passed": true,
+      "Detail": "capture with 3 overlay boxes == capture without: True; static 3 s: 5 captures, 5 skipped as unchanged, 0 re-OCR'd"
+    },
+    {
+      "Name": "Cache hits on static text (logged)",
+      "Passed": true,
+      "Detail": "3/3 lines from cache, pipeline 170 ms"
+    },
+    {
+      "Name": "Target language picker (en -> ja)",
+      "Passed": true,
+      "Detail": "こんにちは、世界。 | 猫は家の中で眠っています。 | お問い合わせ. (2325 ms)"
+    },
+    {
+      "Name": "Modes Overlay / Side / Both",
+      "Passed": true,
+      "Detail": "side=True both=True overlay=True (boxes=3 panelVisible=False status=Libre (local) · 3 lines · 3 cached · 151 ms)"
+    },
+    {
+      "Name": "Tray icon present",
+      "Passed": true,
+      "Detail": "visible=True items=7"
+    },
+    {
+      "Name": "Error message: local translator not running",
+      "Passed": true,
+      "Detail": "\"Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again.\" after 2951 ms, loop running=True"
+    },
+    {
+      "Name": "Error message: invalid server URL",
+      "Passed": true,
+      "Detail": "\"Enter a valid HTTP or HTTPS translator server URL in Settings, without credentials or query parameters.\" after 282 ms, loop running=True"
+    },
+    {
+      "Name": "Error message: DeepL without key",
+      "Passed": true,
+      "Detail": "\"DeepL needs an API key. Add it in Settings, or choose Libre (local).\" after 871 ms, loop running=True"
+    },
+    {
+      "Name": "Error message: DeepL malformed key",
+      "Passed": true,
+      "Detail": "\"The DeepL API key contains invalid characters. Check it in Settings.\" after 722 ms, loop running=True"
+    },
+    {
+      "Name": "Error message: Google without key",
+      "Passed": true,
+      "Detail": "\"Google needs an API key. Add it in Settings, or choose Libre (local).\" after 761 ms, loop running=True"
+    },
+    {
+      "Name": "Recovers after the backend is fixed",
+      "Passed": true,
+      "Detail": "Libre (local) · 3 lines · 0 cached · 194 ms"
+    },
+    {
+      "Name": "Japanese OCR auto-picked",
+      "Passed": true,
+      "Detail": "ocr=auto:ja; read: こんにちは、世界。 | 猫は家の中で寝ています。 | 読んでくれてありがとう。"
+    },
+    {
+      "Name": "Japanese -> English translated",
+      "Passed": true,
+      "Detail": "Hello world. | The cat is sleeping in the house. | Thank you for reading。"
+    },
+    {
+      "Name": "Japanese source auto-detected",
+      "Passed": true,
+      "Detail": "detected=ja"
+    },
+    {
+      "Name": "Japanese overlay within 1.5 s",
+      "Passed": true,
+      "Detail": "677 ms from loop start (pipeline 668 ms, OCR 163 ms), boxes=3"
+    }
+  ],
+  "metrics": {
+    "dpiScale": 1.25,
+    "monitors": [
+      "\\\\.\\DISPLAY1 1920x1080 primary=True"
+    ],
+    "warmUpMs": 12811,
+    "firstOverlayMs": 5292,
+    "firstPipelineMs": 5261,
+    "firstOcrMs": 521,
+    "source": "Hola, mundo.\nEl gato duerme en la casa.\nGracias por leer con nosotros.",
+    "translation": "Hey, world.\nThe cat sleeps in the house.\nThanks for reading with us.",
+    "detected": "es",
+    "staticCaptures": 4,
+    "staticSkipped": 4,
+    "cachedPassMs": 170,
+    "jaSource": "こんにちは、世界。\n猫は家の中で寝ています。\n読んでくれてありがとう。",
+    "jaTranslation": "Hello world.\nThe cat is sleeping in the house.\nThank you for reading。",
+    "jaOcr": "auto:ja",
+    "jaFirstMs": 677,
+    "stats": {
+      "Captures": 36,
+      "Skipped": 22,
+      "Processed": 9,
+      "Errors": 5,
+      "CacheHits": 15,
+      "CacheLookups": 27
+    }
+  }
+}

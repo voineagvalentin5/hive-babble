@@ -6,3 +6,7 @@ Builds/
 
 translator/
 *.log
+
+# never keep screenshots
+*.png
+!HiveBabble/app-icon.png

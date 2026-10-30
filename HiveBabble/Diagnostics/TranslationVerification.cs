@@ -152,12 +152,12 @@ public static class TranslationVerification
     static BitmapSource Bitmap(CapturedImage capture) => BitmapSource.Create(capture.Width, capture.Height, 96, 96, PixelFormats.Bgra32, null, capture.Bgra, capture.Width * 4);
     static void SaveCapture(CapturedImage capture, string path) => SavePng(Bitmap(capture), path);
     static void SavePng(BitmapSource bitmap, string path)
-    {
+    { if (Environment.GetEnvironmentVariable("HIVEBABBLE_KEEP_TEST_IMAGES") != "1") return; 
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var file = File.Create(path); encoder.Save(file);
     }
     static void SavePreview(FrameWindow frame, BarWindow bar, SidePanelWindow panel, CapturedImage capture, string path)
-    {
+    { if (Environment.GetEnvironmentVariable("HIVEBABBLE_KEEP_TEST_IMAGES") != "1") return; 
         const double margin = 28, header = 62, gap = 18, footer = 48;
         double contentHeight = Math.Max(bar.ActualHeight + frame.ActualHeight, panel.ActualHeight);
         double width = margin * 2 + frame.ActualWidth + gap + panel.ActualWidth;

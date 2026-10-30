@@ -29,7 +29,7 @@ public partial class FrameWindow : Window
 {
     const int WM_HOTKEY = 0x0312, HOTKEY_LOCK = 0xB0B1, HOTKEY_SNAP = 0xB0B2;
     const uint MOD_CONTROL = 0x2, MOD_ALT = 0x1, MOD_NOREPEAT = 0x4000, VK_L = 0x4C, VK_T = 0x54;
-    public const int CaptureInset = 4; // skip the gold border
+    public const int CaptureInset = 10; // skip the gold glass border and glow
 
     public static readonly (string Code, string Label)[] TargetLanguages =
     {
