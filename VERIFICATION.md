@@ -55,3 +55,7 @@ The fixes invalidate pending results when the frame or settings change, clear pr
 `artifacts/recheck/japanese-live.png` is an actual desktop screenshot of the synthetic Japanese scene and live English overlay. The diagnostic stops processing, briefly enables capture of its own frame/toolbar, takes the screenshot, and immediately restores capture exclusion. Normal app operation retains exclusion, which the live test verifies separately.
 
 Remaining limits: cloud account access and real game/browser/PDF interaction are not covered by this recheck. Mixed-DPI alignment remains unverified; saved placement also still needs monitor-specific handling for gaps between monitors.
+
+## Multi-monitor placement fix (2026-10-30, Gimi)
+
+Saved position is checked against each monitor's working area (not the virtual-screen box), so a window saved in a gap between monitors or off-screen is moved onto the nearest monitor. Tested with a saved position of 9000,9000: restored on-screen at 836,516. Live checks 20/20 and interaction checks 7/7 pass again (artifacts/recheck2, artifacts/interactions2). Mixed-DPI with two real monitors is still unverified (only one monitor attached).

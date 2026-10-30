@@ -1,0 +1,43 @@
+{
+  "startedUtc": "2026-10-30T07:44:52.8009998+00:00",
+  "completedUtc": "2026-10-30T07:44:56.6862828+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "Name": "Synthetic baseline reaches overlay",
+      "Passed": true,
+      "Detail": "3 OCR lines, 3 boxes."
+    },
+    {
+      "Name": "Move away and back redraws identical pixels",
+      "Passed": true,
+      "Detail": "Identical captured pixels=True; processed=True; boxes=3."
+    },
+    {
+      "Name": "Pause discards an outstanding translation",
+      "Passed": true,
+      "Detail": "Stale result published=False; new errors=0."
+    },
+    {
+      "Name": "Settings change discards pending result and cache writes",
+      "Passed": true,
+      "Detail": "Cache cleared immediately=True; stale published=False; cache after old response=0; new errors=0."
+    },
+    {
+      "Name": "Fresh settings recover normally",
+      "Passed": true,
+      "Detail": "Processed=True; boxes=3; fresh result=True."
+    },
+    {
+      "Name": "Hide discards pending result without reopening results",
+      "Passed": true,
+      "Detail": "Frame visible=False; panel visible=False; stale published=False; new errors=0."
+    },
+    {
+      "Name": "Provider cooldown survives changed screen pixels",
+      "Passed": true,
+      "Detail": "Pixels changed=True; processed during cooldown=False; provider calls=1-\u003E1; errors=1-\u003E1."
+    }
+  ],
+  "limitations": "Uses real screen capture and Windows OCR with synthetic translators. No cloud requests or real settings writes. Mouse gestures are represented by the same window/state methods."
+}

@@ -114,11 +114,20 @@ public partial class FrameWindow : Window
         var s = Settings;
         if (s.WindowLeft is not double l || s.WindowTop is not double t || s.WindowWidth is not double w || s.WindowHeight is not double h) return;
         if (w < MinWidth || h < MinHeight) return;
-        var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+        // Monitors in WPF units (system DPI), so gaps between monitors and mixed layouts are handled.
+        double k; using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero)) k = 96.0 / g.DpiX;
+        var areas = System.Windows.Forms.Screen.AllScreens.Select(sc => new Rect(sc.WorkingArea.X * k, sc.WorkingArea.Y * k, sc.WorkingArea.Width * k, sc.WorkingArea.Height * k)).ToList();
+        if (areas.Count == 0) return;
         var bar = new Rect(l, t - 60, w, 60);
-        if (!screen.IntersectsWith(bar)) { Log.Write("Saved window position is off-screen; using the default."); return; }
-        bool onMonitor = System.Windows.Forms.Screen.AllScreens.Any(sc => sc.WorkingArea.IntersectsWith(
-            new System.Drawing.Rectangle((int)l, (int)t, (int)w, (int)h)) || sc.Bounds.Contains((int)(l + 20), (int)t));
+        bool onMonitor = areas.Any(a => { var i = Rect.Intersect(a, bar); return !i.IsEmpty && i.Width >= 80 && i.Height >= 30; });
+        if (!onMonitor)
+        {
+            var c0 = new Point(l + w / 2, t + h / 2);
+            var a = areas.OrderBy(a => Math.Pow(Math.Clamp(c0.X, a.Left, a.Right) - c0.X, 2) + Math.Pow(Math.Clamp(c0.Y, a.Top, a.Bottom) - c0.Y, 2)).First();
+            w = Math.Min(w, a.Width); h = Math.Min(h, Math.Max(MinHeight, a.Height - 60));
+            l = Math.Clamp(l, a.Left, a.Right - w); t = Math.Clamp(t, a.Top + 60, Math.Max(a.Top + 60, a.Bottom - h));
+            Log.Write("Saved window position was off-screen or in a monitor gap; moved onto the nearest monitor.");
+        }
         WindowStartupLocation = WindowStartupLocation.Manual; Left = l; Top = t; Width = w; Height = h;
         Log.Write($"Restored window {l:0},{t:0} {w:0}x{h:0} (monitor match: {onMonitor}).");
     }
