@@ -16,7 +16,7 @@
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Resource Include="app.ico" />
+    <Resource Include="app.ico" /><Resource Include="settings-logo.png" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 </Project>

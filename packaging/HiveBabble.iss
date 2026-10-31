@@ -1,4 +1,4 @@
-﻿; Hive-Babble per-user installer (no admin). Built by packaging\Build-Installer.ps1.
+; Hive-Babble per-user installer (no admin). Built by packaging\Build-Installer.ps1.
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
@@ -23,6 +23,10 @@ SolidCompression=yes
 LZMAUseSeparateProcess=yes
 DiskSpanning=no
 WizardStyle=modern
+WizardImageFile={#Root}\packaging\wizard\wizard-100.bmp,{#Root}\packaging\wizard\wizard-200.bmp
+WizardSmallImageFile={#Root}\packaging\wizard\wizard-small-100.bmp,{#Root}\packaging\wizard\wizard-small-200.bmp
+WizardImageStretch=no
+WizardImageBackColor=$0C1014
 CloseApplications=yes
 
 [Tasks]

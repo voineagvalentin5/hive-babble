@@ -14,3 +14,5 @@ translator/
 # release packaging
 Builds/
 packaging/Output/
+!branding/hive-babble-logo.png
+!HiveBabble/settings-logo.png
