@@ -87,7 +87,7 @@ public partial class FrameWindow : Window
         Closing += (_, _) => { _closed = true; ResetFrameHash(); SavePlacement(); };
         Closed += (_, _) =>
         {
-            _loop.Stop(); _tray?.Dispose();
+            _loop.Stop(); _tray?.Dispose(); TranslatorHost.Stop();
             if (_hwnd != IntPtr.Zero) { Native.UnregisterHotKey(_hwnd, HOTKEY_LOCK); Native.UnregisterHotKey(_hwnd, HOTKEY_SNAP); }
         };
     }
@@ -180,6 +180,8 @@ public partial class FrameWindow : Window
             Close();
             return;
         }
+        if (Settings.Provider == TranslatorProvider.Libre) await TranslatorHost.EnsureRunningAsync(Settings.LibreUrl, ShowStatus);
+        if (_closed) return;
         _ = WarmUpTranslator();
         StartLoop();
         if (Arg("--autosnap") is string s)

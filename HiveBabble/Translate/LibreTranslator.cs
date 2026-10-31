@@ -32,7 +32,7 @@ public sealed class LibreTranslator : ITranslator, IDetectsLanguage
                 return json.GetProperty("translatedText").GetString();
             },
             status => status == 400 ? "LibreTranslate rejected the request. Check the selected languages and installed translation models." : TranslatorHttp.StatusMessage("LibreTranslate", status),
-            endpoint.IsLoopback ? "Local translator not running. Run Start-Translator.ps1 in the Hive-Babble folder, then try again."
+            endpoint.IsLoopback ? "Local translator not running. Restart Hive-Babble to start it, or run Start-Translator.ps1 for a source build."
                 : "Could not reach LibreTranslate. Check the server URL and connection in Settings.");
     }
 }
