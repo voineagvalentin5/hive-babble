@@ -103,7 +103,7 @@ public static class LiveVerification
             Add("Overlay drawn over OCR rects", drawn && frame.Overlay.Children.Count == frame.LastLines.Count,
                 $"{frame.Overlay.Children.Count} boxes for {frame.LastLines.Count} OCR lines");
             Add("Spanish -> English translated", frame.LastTranslatedText.Contains("cat", StringComparison.OrdinalIgnoreCase) || frame.LastTranslatedText.Contains("Thank", StringComparison.OrdinalIgnoreCase),
-                frame.LastTranslatedText.Replace("\n", " | "));
+                $"{frame.LastLines.Count} lines, {frame.LastTranslatedText.Length} chars translated");
             Add("Source language auto-detected", s.SourceLanguage == "auto" && frame.LastDetectedLanguage == "es", $"detected={frame.LastDetectedLanguage ?? "(none)"}");
             Add("Overlay within 1.5 s", drawn && firstMs <= 1500, $"{firstMs} ms from loop start (pipeline {st.LastLatencyMs} ms, OCR {st.LastOcrMs} ms)");
             if (frame.Overlay.Children.Count > 0 && frame.LastLines.Count > 0)
@@ -145,7 +145,7 @@ public static class LiveVerification
             processed = st.Processed;
             frame.SetTargetLanguage("ja");
             await WaitFor(() => st.Processed > processed || st.Errors > 0, 8000);
-            Add("Target language picker (en -> ja)", frame.LastTranslatedText.Any(c => c > 0x3000), $"{frame.LastTranslatedText.Replace("\n", " | ")} ({st.LastLatencyMs} ms)");
+            Add("Target language picker (en -> ja)", frame.LastTranslatedText.Any(c => c > 0x3000), $"{frame.LastTranslatedText.Length} chars ({st.LastLatencyMs} ms)");
             frame.SetTargetLanguage("en");
             processed = st.Processed;
             await WaitFor(() => st.Processed > processed, 5000);
@@ -198,8 +198,8 @@ public static class LiveVerification
             await WaitFor(() => (st.Processed > processed && frame.Overlay.Children.Count > 0) || st.Errors > jerr, 15000);
             long jaMs = jsw.ElapsedMilliseconds;
             metrics["jaSource"] = frame.LastSourceText; metrics["jaTranslation"] = frame.LastTranslatedText; metrics["jaOcr"] = frame.OcrTag; metrics["jaFirstMs"] = jaMs;
-            Add("Japanese OCR auto-picked", frame.OcrTag.Contains("ja"), $"ocr={frame.OcrTag}; read: {frame.LastSourceText.Replace("\n", " | ")}");
-            Add("Japanese -> English translated", frame.LastTranslatedText.Contains("cat", StringComparison.OrdinalIgnoreCase) || frame.LastTranslatedText.Contains("Hello", StringComparison.OrdinalIgnoreCase), frame.LastTranslatedText.Replace("\n", " | "));
+            Add("Japanese OCR auto-picked", frame.OcrTag.Contains("ja"), $"ocr={frame.OcrTag}; read {frame.LastLines.Count} lines");
+            Add("Japanese -> English translated", frame.LastTranslatedText.Contains("cat", StringComparison.OrdinalIgnoreCase) || frame.LastTranslatedText.Contains("Hello", StringComparison.OrdinalIgnoreCase), $"{frame.LastTranslatedText.Length} chars translated");
             Add("Japanese source auto-detected", frame.LastDetectedLanguage == "ja", $"detected={frame.LastDetectedLanguage ?? "(none)"}");
             Add("Japanese overlay within 1.5 s", jaMs <= 1500 && frame.Overlay.Children.Count > 0, $"{jaMs} ms from loop start (pipeline {st.LastLatencyMs} ms, OCR {st.LastOcrMs} ms), boxes={frame.Overlay.Children.Count}");
             if (frame.Overlay.Children.Count > 0 && frame.LastSourceText.Contains("猫"))
