@@ -10,3 +10,7 @@ translator/
 # never keep screenshots
 *.png
 !HiveBabble/app-icon.png
+
+# release packaging
+Builds/
+packaging/Output/
