@@ -1,8 +1,11 @@
 # Builds the one-click installer: Builds\Release\HiveBabble-Setup-<ver>.exe
 # Needs: .NET 8 SDK, Inno Setup 6 (winget install JRSoftware.InnoSetup --scope user), and a working translator\venv (Start-Translator.ps1).
 [CmdletBinding()]
-param([string]$Version = '1.0.0',
-      [string[]]$Models = @('ja_en','translate-zh_en-1_9','ko_en','translate-es_en-1_9','translate-fr_en-1_9','translate-de_en-1_3','translate-ru_en-1_9','en_ja','en_es'))
+# Default: small download - app + translator + ja->en; the app downloads other models on first run.
+# -Full: full offline bundle with every model (no download needed), output HiveBabble-Setup-<ver>-Full.exe.
+param([string]$Version = '1.0.0', [switch]$Full, [string[]]$Models)
+if (-not $Models) { $Models = if ($Full) { @('ja_en','translate-zh_en-1_9','ko_en','translate-es_en-1_9','translate-fr_en-1_9','translate-de_en-1_3','translate-ru_en-1_9','en_ja','en_es') } else { @('ja_en') } }
+$suffix = if ($Full) { '-Full' } else { '' }
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $release = Join-Path $root 'Builds\Release'; $stage = Join-Path $release 'stage'; $tr = Join-Path $stage 'translator'
@@ -10,6 +13,7 @@ $release = Join-Path $root 'Builds\Release'; $stage = Join-Path $release 'stage'
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path (Join-Path $tr 'python'), (Join-Path $tr 'models') | Out-Null
 Copy-Item (Join-Path $root 'Builds\HiveBabble.exe'), (Join-Path $root 'THIRD-PARTY-NOTICES.txt'), (Join-Path $root 'LICENSE.txt') $stage
+Copy-Item (Join-Path $root 'docs\USER-README.md') (Join-Path $stage 'README.txt')
 
 # Embedded CPython 3.11.9 (python.org) + the site-packages of the tested venv (same 3.11 x64 ABI).
 $zip = Join-Path $env:TEMP 'hbpkg\python-3.11.9-embed-amd64.zip'
@@ -33,6 +37,6 @@ foreach ($m in $Models) { Copy-Item (Join-Path $pkgs $m) (Join-Path $tr 'models'
 
 $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $iscc) { throw 'Inno Setup 6 not found: winget install JRSoftware.InnoSetup --scope user' }
-& $iscc "/DAppVersion=$Version" "/DStage=$stage" "/DRoot=$root" "/O$release" (Join-Path $PSScriptRoot 'HiveBabble.iss')
+& $iscc "/DAppVersion=$Version" "/DStage=$stage" "/DRoot=$root" "/DSuffix=$suffix" "/O$release" (Join-Path $PSScriptRoot 'HiveBabble.iss')
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
-Get-ChildItem $release -Filter 'HiveBabble-Setup-*.exe' | ForEach-Object { "{0}  {1:N0} MB" -f $_.FullName, ($_.Length / 1MB) }
+Get-ChildItem $release -Filter "HiveBabble-Setup-$Version$suffix.exe" | ForEach-Object { "{0}  {1:N0} MB" -f $_.FullName, ($_.Length / 1MB) }

@@ -1,4 +1,7 @@
 ; Hive-Babble per-user installer (no admin). Built by packaging\Build-Installer.ps1.
+#ifndef Suffix
+  #define Suffix ""
+#endif
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
@@ -14,7 +17,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
-OutputBaseFilename=HiveBabble-Setup-{#AppVersion}
+OutputBaseFilename=HiveBabble-Setup-{#AppVersion}{#Suffix}
 SetupIconFile={#Root}\HiveBabble\app.ico
 UninstallDisplayIcon={app}\HiveBabble.exe
 LicenseFile={#Stage}\LICENSE.txt
@@ -38,8 +41,10 @@ Source: "{#Stage}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs crea
 [Icons]
 Name: "{autoprograms}\Hive-Babble"; Filename: "{app}\HiveBabble.exe"
 Name: "{autodesktop}\Hive-Babble"; Filename: "{app}\HiveBabble.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Hive-Babble README"; Filename: "{app}\README.txt"
 
 [Run]
+Filename: "{app}\README.txt"; Description: "View the README"; Flags: postinstall shellexec skipifsilent unchecked
 Filename: "{app}\HiveBabble.exe"; Description: "Launch Hive-Babble"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
