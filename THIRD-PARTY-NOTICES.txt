@@ -1,0 +1,125 @@
+Hive-Babble - Third-Party Notices
+Copyright (c) 2026 Codex Hive Labs LLC. Hive-Babble itself is licensed separately (see LICENSE.txt).
+
+Hive-Babble ships the following third-party software. Each remains under its own license; full license
+texts are in the "licenses" folder of the installation. Nothing below has been modified by Codex Hive Labs.
+
+======================================================================
+1. Hive-Babble app (HiveBabble.exe)
+======================================================================
+  .NET 8 runtime and WPF/WinForms (self-contained)   MIT - (c) .NET Foundation and Contributors
+                                                     https://github.com/dotnet/runtime
+  System.Security.Cryptography.ProtectedData 8.0.0   MIT - (c) .NET Foundation
+  Windows OCR (Windows.Media.Ocr)                    part of Windows; not redistributed
+
+======================================================================
+2. Offline translator (folder "translator", runs as a separate local process)
+======================================================================
+The translator is LibreTranslate 1.9.6, run UNMODIFIED as a separate program on 127.0.0.1. Hive-Babble
+only talks to it over HTTP. LibreTranslate and several of its parts are licensed under the
+GNU Affero General Public License v3 (AGPL-3.0) or GNU GPL; you may obtain, study, change and
+redistribute their source code under those licenses.
+
+Corresponding source code:
+  LibreTranslate     https://github.com/LibreTranslate/LibreTranslate (tag v1.9.6)
+  LexiLang           https://github.com/LibreTranslate/LexiLang
+  MiniSBD            https://github.com/LibreTranslate/MiniSBD
+  argos-translate-files https://github.com/LibreTranslate/argos-translate-files
+  Argos Translate    https://github.com/argosopentech/argos-translate
+  PyMuPDF            https://github.com/pymupdf/PyMuPDF
+  pysrt              https://github.com/byroot/pysrt
+  All exact versions below are also available as source distributions from https://pypi.org.
+  A source archive of the AGPL/GPL components is offered alongside the Hive-Babble download
+  (HiveBabble-translator-sources.zip) for at least three years from each release.
+
+  Python 3.11.9 (embeddable, python.org)             PSF License Agreement - (c) Python Software Foundation
+
+Python packages:
+  APScheduler==3.11.2                MIT License
+  argos-translate-files==1.4.4       AGPL-3.0 (LICENSE file)
+  argos-translate-lt==1.12.1         MIT License
+  async-timeout==5.0.1               Apache Software License
+  babel==2.18.0                      BSD License
+  beautifulsoup4==4.9.3              MIT License
+  certifi==2026.10.23                Mozilla Public License 2.0 (MPL 2.0)
+  chardet==7.7.0                     0BSD
+  charset-normalizer==3.5.2          MIT
+  click==8.5.0                       BSD-3-Clause
+  cloudpickle==3.1.2                 BSD License
+  colorama==0.4.6                    BSD License
+  commonmark==0.9.2                  BSD License
+  ctranslate2==4.8.4                 MIT
+  Deprecated==1.3.1                  MIT License
+  expiringdict==1.2.2                Apache Software License
+  filelock==4.2.4                    MIT
+  Flask==2.2.5                       BSD License
+  flask-babel==3.1.0                 BSD License
+  Flask-Limiter==2.6.3               MIT License
+  flask-swagger==0.2.14              MIT
+  flask-swagger-ui==4.11.1           MIT License
+  flatbuffers==25.12.19              Apache Software License
+  idna==3.20                         BSD-3-Clause
+  itsdangerous==2.1.2                BSD License
+  Jinja2==3.1.6                      BSD License
+  joblib==1.6.0                      BSD-3-Clause
+  langdetect==1.0.9                  Apache Software License
+  LexiLang==1.0.7                    GNU Affero General Public License v3 or later (AGPLv3+)
+  libretranslate==1.9.6              GNU Affero General Public License v3
+  limits==5.8.0                      MIT
+  lxml==6.1.3                        BSD-3-Clause
+  MarkupSafe==3.0.4                  BSD-3-Clause
+  minisbd==0.9.5                     GNU Affero General Public License v3
+  networkx==3.6.1                    BSD-3-Clause
+  numpy==1.26.4                      BSD License
+  onnxruntime==1.31.1                MIT License
+  packaging==23.1                    Apache Software License; BSD License
+  polib==1.1.1                       MIT License
+  prometheus-client==0.15.0          Apache Software License
+  protobuf==7.36.2                   3-Clause BSD License
+  psutil==7.2.2                      BSD-3-Clause
+  Pygments==2.21.0                   BSD-2-Clause
+  pymupdf==2.0                       Dual Licensed - GNU AFFERO GPL 3.0 or Artifex Commercial Lic
+  pymupdf4llm==2.0                   empty placeholder package from Artifex (PyMuPDF), AGPL-3.0
+  pymupdf_layout==2.0                empty placeholder package from Artifex (PyMuPDF), AGPL-3.0
+  pysrt==1.1.2                       GNU General Public License (GPL)
+  pytz==2026.6                       MIT License
+  PyYAML==6.0.3                      MIT License
+  redis==4.4.4                       MIT License
+  regex==2026.9.29                   Apache-2.0 AND CNRI-Python
+  requests==2.31.0                   Apache Software License
+  rich==12.6.0                       MIT License
+  sacremoses==0.1.1                  MIT License
+  sentencepiece==0.2.2               Apache-2.0
+  setuptools==65.5.0                 MIT License
+  six==1.17.0                        MIT License
+  soupsieve==3.0.4                   MIT
+  tabulate==0.10.0                   MIT
+  tqdm==4.70.1                       MPL-2.0 AND MIT
+  typing_extensions==4.16.0          PSF-2.0
+  tzdata==2026.6                     Apache-2.0
+  tzlocal==5.4.5                     MIT
+  urllib3==2.8.0                     MIT
+  waitress==2.1.2                    Zope Public License
+  Werkzeug==2.3.8                    BSD License
+  wrapt==2.5.1                       BSD-2-Clause
+
+======================================================================
+3. Translation models (folder "translator\models", Argos Translate packages)
+======================================================================
+Bundled pairs: ja->en, zh->en, ko->en, es->en, fr->en, de->en, ru->en, en->ja, en->es.
+The models are distributed by the Argos Translate project (https://www.argosopentech.com/argospm/index/).
+Each model folder contains a README.md with its exact credits. Summary:
+  - zh, es, fr (v1.9) models are derived from OPUS-MT models by Jorg Tiedemann and Santhosh Thottingal,
+    "OPUS-MT - Building open translation services for the World" (EAMT 2020), licensed CC-BY 4.0
+    (https://creativecommons.org/licenses/by/4.0/). Converted to CTranslate2 format by Argos Translate.
+  - ja, ko, de, ru, en->es models were trained by the Argos Translate project on public parallel data
+    compiled by OPUS (https://opus.nlpl.eu/) (incl. CCAligned, WikiMatrix, OpenSubtitles, ParaCrawl, UNPC)
+    and Wiktionary data via Wiktextract; ru models by Aleksey Kutashov. Argos Translate publishes these
+    models for free redistribution; see each README.md for the dataset credits.
+  - All model packages include sentence-splitting models from Stanza (Stanford NLP), Apache-2.0.
+
+======================================================================
+4. Installer
+======================================================================
+  Installer built with Inno Setup (https://jrsoftware.org/isinfo.php), (c) Jordan Russell and Martijn Laan,
+  Inno Setup License (free for commercial and non-commercial use).

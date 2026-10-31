@@ -1,0 +1,23 @@
+﻿DRAFT - pending review and approval by Valentin Voineag, Codex Hive Labs LLC. Not legal advice.
+
+Hive-Babble Freeware License
+Copyright (c) 2026 Codex Hive Labs LLC. All rights reserved.
+
+1. Grant. Codex Hive Labs LLC ("we") grants you a free, non-exclusive, non-transferable license to install
+   and use Hive-Babble on computers you own or control, for personal or commercial purposes.
+2. Restrictions. Except as allowed by law or by the third-party licenses in section 4, you may not sell,
+   rent, sublicense or redistribute Hive-Babble, or modify, decompile or reverse-engineer HiveBabble.exe.
+   Please share the official download link instead of the file.
+3. Privacy. Hive-Babble translates on your computer by default. It saves only its settings and a small
+   diagnostic log (counts and timings, no screen text) in %APPDATA%\HiveBabble, and does not keep
+   screenshots. If you choose an online provider (DeepL or Google) in Settings, recognized text is sent
+   to that provider under its own terms.
+4. Third-party software. The bundled offline translator (LibreTranslate, Argos Translate, Python and the
+   packages and models listed in THIRD-PARTY-NOTICES.txt) is NOT covered by this license. Each component
+   is provided under its own license (including AGPL-3.0, GPL, MIT, BSD, Apache-2.0, PSF, CC-BY 4.0),
+   and nothing here limits your rights under those licenses.
+5. No warranty. Hive-Babble is provided "AS IS", without warranty of any kind. Machine translation can be
+   wrong; do not rely on it where errors could cause harm.
+6. Limitation of liability. To the extent permitted by law, we are not liable for any damages arising from
+   the use of or inability to use Hive-Babble.
+7. Termination. This license ends automatically if you break its terms; you must then uninstall Hive-Babble.
