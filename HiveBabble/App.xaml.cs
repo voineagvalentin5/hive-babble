@@ -9,8 +9,13 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        DispatcherUnhandledException += (_, ex) => { Log.Write("Unhandled UI error: " + ex.Exception); ex.Handled = true; };
-        AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Write("Fatal: " + ex.ExceptionObject);
+        Log.Write($"Launch v{typeof(App).Assembly.GetName().Version} pid {Environment.ProcessId} from {AppContext.BaseDirectory}");
+        // Crash logging: exception type and stack only (messages can echo screen text).
+        DispatcherUnhandledException += (_, ex) => { Log.Write("Unhandled UI error: " + Crash.Describe(ex.Exception)); ex.Handled = true; };
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) => Log.Write("Fatal: " + Crash.Describe(ex.ExceptionObject as Exception) + (ex.IsTerminating ? " (terminating)" : ""));
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, ex) => { Log.Write("Unobserved task error: " + Crash.Describe(ex.Exception)); ex.SetObserved(); };
+        SessionEnding += (_, ex) => Log.Write("Session ending: " + ex.ReasonSessionEnding);
+        Exit += (_, ex) => Log.Write("Exit code " + ex.ApplicationExitCode + ".");
         int fixtureIndex = Array.IndexOf(e.Args, "--diagnostic-backdrop");
         if (Array.IndexOf(e.Args, "--sample-scene") >= 0)
         {

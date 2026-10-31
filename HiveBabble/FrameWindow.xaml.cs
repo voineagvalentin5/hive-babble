@@ -84,7 +84,7 @@ public partial class FrameWindow : Window
             if (_bar != null) _bar.Visibility = v;
         };
         _loop.Tick += LoopTick;
-        Closing += (_, _) => { _closed = true; ResetFrameHash(); SavePlacement(); };
+        Closing += (_, _) => { _closed = true; Log.Write("Closing (" + CloseSource() + ")."); ResetFrameHash(); SavePlacement(); };
         Closed += (_, _) =>
         {
             _loop.Stop(); _tray?.Dispose(); TranslatorHost.Stop();
@@ -180,7 +180,12 @@ public partial class FrameWindow : Window
             Close();
             return;
         }
-        if (Settings.Provider == TranslatorProvider.Libre) await TranslatorHost.EnsureRunningAsync(Settings.LibreUrl, ShowStatus);
+        if (Settings.Provider == TranslatorProvider.Libre && Uri.TryCreate(Settings.LibreUrl, UriKind.Absolute, out var lu) && lu.IsLoopback)
+        {
+            if (!await ModelManager.EnsureModelsAsync(Settings.SourceLanguage, Settings.TargetLanguage, ShowStatus, () => _closed)) { if (!_closed) StartLoop(); return; }
+            if (_closed) return;
+            await TranslatorHost.EnsureRunningAsync(Settings.LibreUrl, ShowStatus);
+        }
         if (_closed) return;
         _ = WarmUpTranslator();
         StartLoop();
@@ -203,8 +208,18 @@ public partial class FrameWindow : Window
         HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
     }
 
+    /// <summary>Names the code path that closed the window (method names only, never screen text). A bare dispatcher stack means WM_CLOSE came from outside (taskbar, Alt+F4, another process).</summary>
+    static string CloseSource()
+    {
+        var frames = new System.Diagnostics.StackTrace(2, false).GetFrames()
+            .Select(f => f.GetMethod()).Where(m => m?.DeclaringType?.Namespace?.StartsWith("HiveBabble") == true)
+            .Select(m => m!.DeclaringType!.Name + "." + m.Name).Where(n => n != "App.Main").Distinct().Take(4).ToArray();
+        return frames.Length == 0 ? "window message / external" : string.Join(" < ", frames);
+    }
+
     IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        if (msg == 0x0011 /*WM_QUERYENDSESSION*/) Log.Write("Windows is signing out or shutting down.");
         if (msg == WM_HOTKEY)
         {
             if (wParam.ToInt32() == HOTKEY_LOCK) { ToggleLock(); handled = true; }
