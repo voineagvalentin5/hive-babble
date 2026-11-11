@@ -12,8 +12,10 @@ Made by Codex Hive Labs LLC. Free to use.
 
 ## Install
 
+Download `HiveBabble-Setup-1.0.0.exe` from the [Hive-Babble Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107). This repository does not include the installer.
+
 1. Run `HiveBabble-Setup-1.0.0.exe`. No administrator rights are needed; it installs just for you, in `%LOCALAPPDATA%\Programs\Hive-Babble`.
-2. **"Windows protected your PC" warning:** the installer isn't code-signed yet, so Windows SmartScreen may warn you. Click **More info**, then **Run anyway**. Only do this if you downloaded Hive-Babble from the official Codex Hive Labs page.
+2. **"Windows protected your PC" warning:** the installer isn't code-signed yet, so Windows SmartScreen may warn you. Click **More info**, then **Run anyway**. Only do this if you downloaded Hive-Babble from that official Patreon post.
 3. Start Hive-Babble from the Start menu (and the desktop shortcut, if you chose one).
 
 **First start:** Hive-Babble downloads the language models it needs and shows the progress at the bottom of the frame ("Downloading language model 2/7…"). If a download fails it retries automatically, and anything still missing is tried again the next time you start it. Japanese → English is included in the installer, so that works right away.

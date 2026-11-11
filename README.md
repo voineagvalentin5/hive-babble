@@ -2,14 +2,31 @@
 
 Codex Hive Labs · live on-screen translation for Windows. **Read the world.**
 
-## Run
+This repository is the source code. It does not include the Windows installer or a pre-built `HiveBabble.exe`.
+
+## Get the app
+
+The easiest way to run Hive-Babble is the Windows installer, available to members (the free Patreon tier is enough) on the [Hive-Babble Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107). After you download it, follow [docs/USER-README.md](docs/USER-README.md).
+
+The translator source archive (`HiveBabble-translator-sources.zip`) is on that same post.
+
+## Build from source
+
+You need Windows 10 or 11, the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0), and [Python 3.11](https://www.python.org/downloads/). In this folder, run:
 
 ```powershell
+.\Build-App.ps1
 .\Start-Translator.ps1 -Background
 .\Builds\HiveBabble.exe
 ```
 
-The local translator runs on `http://127.0.0.1:5000`. The default setup includes English, Spanish, and Japanese. Models download on first setup; subsequent translation runs locally without an API key. Python 3.11 is required for this local service. A newly loaded model can take a few seconds on its first translation; background startup warms the Spanish/Japanese models.
+`Build-App.ps1` publishes a self-contained Windows x64 executable to `Builds\HiveBabble.exe`. The build script finds the .NET 8 SDK on PATH or in the user-local Microsoft installation. If you do not have it yet:
+
+```powershell
+winget install Microsoft.DotNet.SDK.8
+```
+
+`Start-Translator.ps1` starts the local translator at `http://127.0.0.1:5000`. On first run it can create a Python 3.11 environment and download models (English, Spanish, and Japanese by default). Later runs stay local and need no API key. A newly loaded model can take a few seconds on its first translation; background startup warms the Spanish and Japanese models.
 
 ## Use
 
@@ -45,13 +62,7 @@ Log: `%APPDATA%\HiveBabble\hivebabble.log`
 
 Normal frame logs record counts, timings, and cache hits rather than captured text. Static captures are skipped and translated lines are cached in memory.
 
-## Build and verify
-
-```powershell
-.\Build-App.ps1
-```
-
-This publishes a self-contained Windows x64 executable to `Builds\HiveBabble.exe`. The build script resolves the .NET 8 SDK from PATH or the user-local Microsoft installation.
+## Verify
 
 Diagnostics use synthetic sample windows and write reports into the selected folder:
 
@@ -71,7 +82,3 @@ Hive-Babble is licensed under [Creative Commons Attribution 4.0 International (C
 Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)"
 
 Third-party software, including the bundled offline translator (LibreTranslate, Argos Translate, Python, and the packages and models listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)), is not licensed under CC BY 4.0. Each component remains under its own license.
-
-## Downloads
-
-The Windows installer and the translator source archive are available to members on the [Hive-Babble Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107). This repository does not include those files.
