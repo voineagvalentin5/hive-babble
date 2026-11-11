@@ -63,3 +63,15 @@ Diagnostics use synthetic sample windows and write reports into the selected fol
 ```
 
 See [VERIFICATION.md](VERIFICATION.md) for measured results and remaining coverage. Real cloud credentials, borderless games, and mixed-DPI multi-monitor behavior require separate validation.
+
+## License
+
+Hive-Babble is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). See [LICENSE.txt](LICENSE.txt).
+
+Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)"
+
+Third-party software, including the bundled offline translator (LibreTranslate, Argos Translate, Python, and the packages and models listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)), is not licensed under CC BY 4.0. Each component remains under its own license.
+
+## Downloads
+
+The Windows installer and the translator source archive are available to members on the [Hive-Babble Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107). This repository does not include those files.
