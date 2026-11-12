@@ -12,7 +12,7 @@ $release = Join-Path $root 'Builds\Release'; $stage = Join-Path $release 'stage'
 & (Join-Path $root 'Build-App.ps1')
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path (Join-Path $tr 'python'), (Join-Path $tr 'models') | Out-Null
-Copy-Item (Join-Path $root 'Builds\HiveBabble.exe'), (Join-Path $root 'THIRD-PARTY-NOTICES.txt'), (Join-Path $root 'LICENSE.txt') $stage
+Copy-Item (Join-Path $root 'Builds\HiveBabble.exe'), (Join-Path $root 'THIRD-PARTY-NOTICES.txt'), (Join-Path $root 'LICENSE.txt'), (Join-Path $root 'LICENSE-CC-BY-4.0.txt'), (Join-Path $root 'NOTICE') $stage
 Copy-Item (Join-Path $root 'docs\USER-README.md') (Join-Path $stage 'README.txt')
 
 # Embedded CPython 3.11.9 (python.org) + the site-packages of the tested venv (same 3.11 x64 ABI).
