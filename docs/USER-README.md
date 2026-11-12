@@ -68,7 +68,7 @@ Hive-Babble uses Windows' built-in text recognition, which needs that language i
 
 ## Credits and licenses
 
-Hive-Babble is licensed under Creative Commons Attribution 4.0 International (CC BY 4.0); see `LICENSE.txt`. Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)". Third-party software, including the bundled offline translator, is not covered by that license. It includes open-source components, most notably the LibreTranslate / Argos Translate offline translator (AGPL-3.0) and OPUS-MT based language models (CC-BY 4.0). Full credits and license texts are in `THIRD-PARTY-NOTICES.txt` and the `licenses` folder, and the source code for the copyleft parts is offered as `HiveBabble-translator-sources.zip` on the [members Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107).
+Hive-Babble's source code is licensed under the Apache License 2.0 (see `LICENSE.txt` and `NOTICE`), and its logo, artwork, and documentation are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0) (see `LICENSE-CC-BY-4.0.txt`). Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)". Third-party software, including the bundled offline translator, is not covered by either license. It includes open-source components, most notably the LibreTranslate / Argos Translate offline translator (AGPL-3.0) and OPUS-MT based language models (CC-BY 4.0). Full credits and license texts are in `THIRD-PARTY-NOTICES.txt` and the `licenses` folder, and the source code for the copyleft parts is offered as `HiveBabble-translator-sources.zip` on the [members Patreon post](https://www.patreon.com/Codex_Hive_Labs/posts/hive-babble-is-173935107).
 
 ## Contact
 

@@ -1,0 +1,16 @@
+Hive-Babble
+Copyright 2026 Codex Hive Labs LLC (https://codex-hive.com)
+
+The source code in this repository is licensed under the Apache License,
+Version 2.0 (see LICENSE.txt).
+
+The Hive-Babble logo (branding/), artwork, and documentation, including
+README text, are licensed under Creative Commons Attribution 4.0
+International (CC BY 4.0) (see LICENSE-CC-BY-4.0.txt).
+
+Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)"
+
+Third-party software, including the bundled offline translator (LibreTranslate,
+Argos Translate, Python, and the packages and models listed in
+THIRD-PARTY-NOTICES.txt), is not covered by either license above. Each
+component remains under its own license.

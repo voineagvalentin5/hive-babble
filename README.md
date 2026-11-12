@@ -77,8 +77,10 @@ See [VERIFICATION.md](VERIFICATION.md) for measured results and remaining covera
 
 ## License
 
-Hive-Babble is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). See [LICENSE.txt](LICENSE.txt).
+The source code is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). See [LICENSE.txt](LICENSE.txt) and [NOTICE](NOTICE).
+
+The Hive-Babble logo, artwork, and documentation (including this README) are licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). See [LICENSE-CC-BY-4.0.txt](LICENSE-CC-BY-4.0.txt).
 
 Requested attribution: "Hive-Babble by Codex Hive Labs LLC (https://codex-hive.com)"
 
-Third-party software, including the bundled offline translator (LibreTranslate, Argos Translate, Python, and the packages and models listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)), is not licensed under CC BY 4.0. Each component remains under its own license.
+Third-party software, including the bundled offline translator (LibreTranslate, Argos Translate, Python, and the packages and models listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)), is not covered by either license. Each component remains under its own license.
