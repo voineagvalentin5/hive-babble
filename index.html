@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hive-Babble · Codex Hive Labs</title>
+<meta name="description" content="Hive-Babble is a free app for Windows 10 and 11 that translates text on your screen into English.">
+<link rel="icon" href="favicon.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: #1c1c1c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34zM28 98L0 82' fill='none' stroke='%23c99a4b' stroke-opacity='.10'/%3E%3C/svg%3E");
+    font-family: Helvetica, Arial, sans-serif;
+    color: #eee;
+    -webkit-text-size-adjust: 100%;
+  }
+  a { color: #c99a4b; }
+  a:focus-visible, .btn:focus-visible {
+    outline: 2px solid #c99a4b;
+    outline-offset: 3px;
+  }
+  .top {
+    padding: 18px 48px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: #c99a4b;
+    letter-spacing: 3px;
+    font-size: 14px;
+  }
+  .top a {
+    color: #c99a4b;
+    text-decoration: none;
+  }
+  .top a:hover { text-decoration: underline; }
+  .top .path { color: #aaa; letter-spacing: 1px; }
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 20px 64px;
+    text-align: center;
+  }
+  .logo {
+    max-width: 420px;
+    width: 100%;
+    height: auto;
+  }
+  .icon-wrap { margin-top: 8px; }
+  .icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    border: 2px solid #c99a4b;
+  }
+  .tagline {
+    margin: 28px auto 0;
+    max-width: 36em;
+    font-size: 22px;
+    line-height: 1.45;
+    color: #eee;
+  }
+  .note {
+    margin: 14px auto 0;
+    max-width: 36em;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #ccc;
+  }
+  .actions {
+    text-align: center;
+    margin-top: 28px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 20px;
+    padding: 16px 36px;
+    border-radius: 40px;
+    text-decoration: none;
+    line-height: 1.2;
+  }
+  .btn-primary {
+    background: #c99a4b;
+    color: #1c1c1c;
+    border: 2px solid #c99a4b;
+  }
+  .btn-primary:hover { background: #d4ab63; border-color: #d4ab63; }
+  .btn-secondary {
+    background: transparent;
+    color: #c99a4b;
+    border: 2px solid #c99a4b;
+  }
+  .btn-secondary:hover { background: rgba(201, 154, 75, 0.12); }
+  .card {
+    text-align: left;
+    background: #151515;
+    border: 1px solid #c99a4b;
+    border-radius: 14px;
+    color: #eee;
+    padding: 36px 44px;
+    margin-top: 40px;
+  }
+  .card h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: normal;
+    letter-spacing: 3px;
+    color: #c99a4b;
+  }
+  .card h2 + p,
+  .card h2 + ul { margin-top: 14px; }
+  .card section + section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #333;
+  }
+  .card p, .card li {
+    font-size: 18px;
+    line-height: 1.6;
+  }
+  .card p { margin: 14px 0 0; }
+  .card ul {
+    margin: 12px 0 0;
+    padding-left: 22px;
+  }
+  .card li { margin: 6px 0; }
+  .muted { color: #ccc; }
+  pre {
+    margin: 14px 0 0;
+    padding: 14px 16px;
+    background: #0e0e0e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: #e6e6e6;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-x: auto;
+    text-align: left;
+    white-space: pre;
+  }
+  footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #aaa;
+    text-align: center;
+  }
+  footer p { margin: 0 0 8px; }
+  footer a { color: #c99a4b; }
+  @media (max-width: 640px) {
+    .top {
+      padding: 14px 16px;
+      letter-spacing: 2px;
+      font-size: 12px;
+    }
+    .wrap { padding: 32px 16px 48px; }
+    .logo { max-width: 280px; }
+    .icon { width: 56px; height: 56px; border-radius: 12px; }
+    .tagline { font-size: 18px; margin-top: 20px; }
+    .note { font-size: 15px; }
+    .card { padding: 24px 18px; margin-top: 28px; }
+    .card p, .card li { font-size: 16px; }
+    .actions { gap: 12px; }
+    .btn {
+      font-size: 17px;
+      padding: 14px 20px;
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <a href="https://codex-hive.com">CODEX HIVE LABS</a>
+    <span class="path">babble.codex-hive.com</span>
+  </header>
+  <main class="wrap">
+    <img class="logo" src="hive-babble-logo.png" width="420" height="434" alt="Hive-Babble">
+    <div class="icon-wrap">
+      <img class="icon" src="app-icon.png" width="72" height="72" alt="">
+    </div>
+    <p class="tagline">Hive-Babble is a free app for Windows 10 and 11 that translates text on your screen into English.</p>
+    <p class="note">This page is for download and source. Hive-Babble is a desktop app, not a web or pop-up version of the program.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="https://www.patreon.com/c/Codex_Hive_Labs">Join free on Patreon to download</a>
+      <a class="btn btn-secondary" href="https://github.com/voineagvalentin5/hive-babble">View the source on GitHub</a>
+    </div>
+    <div class="card">
+      <section>
+        <h2>WHAT IT DOES</h2>
+        <p>Hive-Babble is a resizable, always-on-top frame for your Windows desktop. You drag it over text on the screen, and it reads that text and shows a translation. You can show the translation as an overlay on the frame, in a side panel, or both. The side panel includes a button to copy the translation.</p>
+        <p>Set the source language to auto to detect the language on screen, and choose a target language, including English or Japanese. The local translator starts with English, Spanish, and Japanese models, and you can add more local models later. On-screen reading uses the Windows OCR languages installed on your computer. To read Japanese, Chinese, or Korean, install that Windows language pack.</p>
+        <p class="muted">After the local translator is set up, it can run offline on your PC. Nothing is sent anywhere, and no screenshots are kept. The public GitHub repo has the source, not an installer. The Windows installer is for Patreon members; joining the free tier is enough, and no admin rights are needed to install.</p>
+      </section>
+      <section>
+        <h2>WHAT IT'S LIKE TO USE</h2>
+        <ul>
+          <li>Translation starts when you place the frame over text. You can pause or resume live updates, and Ctrl+Alt+T requests a fresh translation.</li>
+          <li>Lock (Ctrl+Alt+L) lets clicks pass through to the app below, while the toolbar stays usable.</li>
+          <li>A tray icon gives you Show/Hide, Translate, Lock, Pause, Settings, and Exit.</li>
+          <li>Window position and size are saved when you close the app. Unchanged text is not sent for a new translation while the app is running.</li>
+          <li>Settings let you choose the provider, languages, and how often the frame updates. DeepL and Google Cloud Translation are available if you enter your own API key; keys are stored only for the current Windows user.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>BUILD FROM SOURCE</h2>
+        <p class="muted">To build it yourself on Windows 10 or 11, install the .NET 8 SDK and Python 3.11, then in the repo folder run:</p>
+        <pre>.\Build-App.ps1
+.\Start-Translator.ps1 -Background
+.\Builds\HiveBabble.exe</pre>
+        <p class="muted">The README in the repo has the full steps.</p>
+      </section>
+      <section>
+        <h2>WHERE IT'S HEADING</h2>
+        <p>Hive-Babble is the public showcase of what the CombOS system is meant to do natively. We plan for translation to be a built-in CombOS feature. HiveLens is planned as a separate headset product.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Hive-Babble by Codex Hive Labs LLC (<a href="https://codex-hive.com">https://codex-hive.com</a>)</p>
+      <p><a href="https://codex-hive.com">Back to Codex Hive</a></p>
+    </footer>
+  </main>
+</body>
+</html>
